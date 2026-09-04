@@ -6,6 +6,8 @@
 
 **Participants:** Luca Muscariello (Cisco)
 
+**Scope clarified by:** [ADR-0026](0026-separate-host-signatures-from-artifact-subjects.md)
+
 ## Context
 
 [ADR-0009](0009-trust-manifest-substitution.md) acknowledged that Trust

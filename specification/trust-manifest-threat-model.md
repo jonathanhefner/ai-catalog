@@ -15,8 +15,9 @@ version selection) are in scope only where they affect trust decisions.
 
 This document is the security analysis that motivates the normative
 hardening in [ai-catalog.md](ai-catalog.md) and the decisions recorded
-in [ADR-0019](../adr/0019-trust-manifest-artifact-binding.md) and
-[ADR-0009](../adr/0009-trust-manifest-substitution.md). It exists to
+in [ADR-0019](../adr/0019-trust-manifest-artifact-binding.md),
+[ADR-0026](../adr/0026-separate-host-signatures-from-artifact-subjects.md),
+and [ADR-0009](../adr/0009-trust-manifest-substitution.md). It exists to
 answer the substitution-attack concern raised in ADR-0009: *"The
 substitution attack of changing out the trust manifest is very real,
 especially if there's no tamper-proofness built in."*
@@ -30,7 +31,8 @@ Publisher
   makes verifiable claims about it. Holds a signing key.
 
 Catalog Host
-: Serves the AI Catalog document. May or may not be the publisher.
+: Serves the AI Catalog document and may sign a Host Trust Manifest containing
+  claims about its own identity. May or may not be the artifact publisher.
   Controls the bytes of the catalog at rest and in transit.
 
 Consumer / Client
@@ -77,6 +79,7 @@ Attacker
 flowchart LR
     Pub[Publisher] -->|signs manifest| Cat[(Catalog Document)]
     Host[Catalog Host] -->|serves| Cat
+    Host -->|optionally signs Host Trust Manifest| Cat
     Cat -->|B1 TLS| Cons[Consumer]
     subgraph Consumer verification
         Cons --> Ver[Verify signature]
@@ -101,9 +104,8 @@ Trust boundaries:
   catalog document at rest (hosting account, CDN, object store, DNS
   control, repository). This is the boundary the substitution attack
   crosses.
-- **B3 — Publisher signing key.** The boundary between data an
-  attacker can author and data that requires the publisher's private
-  key.
+- **B3 — Trust Manifest signing key.** The boundary between data an attacker
+  can author and data that requires the signer's private key.
 - **B4 — Third-party endpoints.** Servers whose URLs appear *inside*
   the (possibly attacker-controlled) Trust Manifest. The consumer is
   induced to contact them.
@@ -114,22 +116,23 @@ Trust boundaries:
 
 | # | Asset | Why it matters |
 |---|-------|----------------|
-| AS1 | Integrity + authenticity of the artifact ↔ trust binding | The whole point of the Trust Manifest: that *these* claims describe *this* artifact. |
-| AS2 | Publisher signing keys | Compromise lets an attacker forge authentic-looking trust. |
+| AS1 | Integrity + authenticity of the artifact ↔ trust binding | The purpose of an entry Trust Manifest: that *these* claims describe *this* artifact. |
+| AS2 | Trust Manifest signing keys | Compromise lets an attacker forge authentic-looking trust. |
 | AS3 | The consumer's trust decision | The ultimate target — install/invoke a malicious artifact under a trusted label. |
 | AS4 | Availability of catalog resolution | Consumers depend on resolving catalogs to find tools. |
 | AS5 | Consumer privacy / telemetry | Fetches triggered by verification can leak who is evaluating what, and from where. |
+| AS6 | Authenticity + integrity of Host trust claims | A Host Trust Manifest is meaningful only when its claims come from the expected catalog operator. |
 
 ## 3. Threat Agents and Assumptions
 
 | ID | Agent | Capability | In scope |
 |----|-------|------------|----------|
 | A1 | Network attacker | On-path, **cannot** break TLS | Yes (bounded) |
-| **A2** | **Catalog-write attacker** | Can modify the catalog document (compromised hosting account, CDN edge, object-store creds, DNS hijack, MITM of a non-TLS origin, or a malicious mirror). **Cannot** obtain the publisher's private key. | **Yes — primary** |
+| **A2** | **Catalog-write attacker** | Can modify the catalog document (compromised hosting account, CDN edge, object-store creds, DNS hijack, MITM of a non-TLS origin, or a malicious mirror). **Cannot** obtain a trusted signer's private key. | **Yes — primary** |
 | A3 | Malicious publisher | Authors and signs manifests with a key it legitimately controls | Yes |
 | A4 | Compromised third-party endpoint | Controls an attestation/key/provenance URL referenced by a manifest | Yes |
 | A5 | Malicious nested/federated author | Authors a sub-catalog that a parent delegates to | Yes |
-| A6 | Key-compromise / stale-key attacker | Holds a previously valid (revoked or rotated) publisher key, or replays old signed material | Yes |
+| A6 | Key-compromise / stale-key attacker | Holds a previously valid (revoked or rotated) signer key, or replays old signed material | Yes |
 
 Out of scope: breaking TLS or the underlying hash/signature
 primitives; compromise of the consumer's own host; supply-chain
@@ -145,9 +148,9 @@ companion review and maps to a mitigation in section 6.
 
 | ID | Threat | Boundary | Agent | Finding |
 |----|--------|----------|-------|---------|
-| S1 | **Self-asserted identity.** Key resolution derives the signer's key *from* the `identity` URI in the manifest. A catalog-write attacker substitutes both `identity` and the key endpoint, signs with their own key, and the signature verifies. Verification proves "signed by whoever owns this identity," not "signed by a publisher I trust." | B2/B3 | A2 | F3 |
+| S1 | **Self-asserted identity.** Key resolution derives the signer's key *from* the `identity` URI in the manifest. A catalog-write attacker substitutes both `identity` and the key endpoint, signs with their own key, and the signature verifies. Verification proves "signed by whoever owns this identity," not "signed by the publisher or host I expected." | B2/B3 | A2 | F3 |
 | S2 | **Publisher spoofing.** `publisher.identifier`/`displayName` live on the entry, outside any signature; an attacker edits them to impersonate a reputable vendor. | B2 | A2 | F9 |
-| S3 | **Host spoofing.** `host.identifier` is attacker-controllable when the catalog is compromised; DID-service-endpoint checks only prove internal consistency of attacker-chosen data. | B2 | A2 | F3 |
+| S3 | **Host spoofing.** `host.identifier` and `host.trustManifest.identity` are attacker-controllable when the catalog is compromised. Exact equality and DID-service-endpoint checks prove only internal consistency of attacker-chosen data. | B2 | A2 | F3 |
 
 ### 4.2 Tampering
 
@@ -205,7 +208,7 @@ cryptographic assurance and accepts attacker-rewritten attestations.
 `did:web:attacker.example`, repoints the key endpoint to their own
 JWKS, and signs the whole (malicious) manifest. Every internal check
 passes. *Closed by F3 mitigation: out-of-band trust anchoring —
-verified signature ≠ trusted publisher.*
+verified signature ≠ trusted publisher or host.*
 
 **SC-4 — alg:none forgery.** Attacker sets the JWS header `alg` to
 `none` (or `HS256` keyed with the publisher's public key) and forges a
@@ -229,9 +232,9 @@ F6: catalog-level signature and/or OCI content-addressing.*
 
 | Finding | Threats | Existing control | Proposed normative mitigation | Spec section |
 |---------|---------|------------------|-------------------------------|--------------|
-| F1 | T1 | Detached JWS over manifest; OPTIONAL `sourceDigest` | Signed `subject` `{url?, mediaType, digest}` committing to the served artifact; REQUIRED whenever signed | Trust Manifest → Subject Binding |
-| F2 | T2 | Level 3 requires manifest presence | Level 3 MUST carry a signed manifest with subject binding + `issuedAt` | Conformance Level 3 |
-| F3 | S1, S3 | Key resolution from `identity` | Trust Anchoring subsection: verified signature ≠ trusted publisher; anchor identity to an out-of-band root | Verification → Trust Anchoring |
+| F1 | T1 | Detached JWS over manifest; OPTIONAL `sourceDigest` | Signed entry `subject` `{url?, type, digest}` committing to the served artifact; REQUIRED for a signed entry Trust Manifest | Trust Manifest → Subject Binding |
+| F2 | T2 | Level 3 requires manifest presence | Level 3 entry Trust Manifests MUST carry a signature, subject binding, and `issuedAt`; an included Host Trust Manifest MUST carry a signature and `issuedAt` without a subject | Conformance Level 3 |
+| F3 | S1, S3 | Key resolution from `identity` | Trust Anchoring subsection: verified signature ≠ trusted publisher or host; anchor identity to an out-of-band root | Verification → Trust Anchoring |
 | F4 | E1 | "detached JWS" | Algorithm allowlist; reject `alg:none` + symmetric; validate `alg`, pin `kid` | Verification → Signature Algorithms |
 | F5 | R1, E2 | none | `issuedAt` (REQUIRED when signed) + `expiresAt`; anti-rollback + revocation guidance | Trust Manifest + Verification |
 | F6 | T3 | OCI Layer 3 (informative) | OPTIONAL catalog-level `signature` (RECOMMENDED at L3) + OCI reference | Catalog signature + Security Considerations |
@@ -324,10 +327,9 @@ while letting trust-sensitive deployments inherit Sigstore's full chain
   domain control). The strength of the whole system reduces to how that
   root is established and maintained; the spec can require anchoring but
   cannot supply the root.
-- **Publisher-key compromise (AS2).** A subject-bound, signed manifest
-  is only as trustworthy as the publisher's key hygiene. Short-lived
-  keys, revocation checking, and OCI/Cosign counter-signatures reduce
-  but do not eliminate this.
+- **Signer-key compromise (AS2).** A signed manifest is only as trustworthy as
+  the signer's key hygiene. Short-lived keys, revocation checking, and, for
+  artifacts, OCI/Cosign counter-signatures reduce but do not eliminate this.
 - **Pre-signing supply-chain compromise.** If a malicious artifact is
   signed by a legitimate publisher, the manifest faithfully attests to
   a bad artifact. Out of scope here; addressed by build-provenance

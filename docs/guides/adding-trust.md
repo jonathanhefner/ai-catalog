@@ -65,12 +65,12 @@ Trust builds on the three conformance levels:
 
 ## Trust Manifest structure
 
-A Trust Manifest is an object on a Catalog Entry (or Host Info object) with one required field:
+A Trust Manifest is an object on a Catalog Entry or Host Info object with one required field:
 
 `identity`
-:   A globally unique URI that identifies this artifact. **Its trust domain must align with the publisher domain in the containing entry's `identifier`.** This binding ties trust claims to the authorized publisher.
+:   A globally unique URI identifying the principal represented by the manifest. On a Catalog Entry, its trust domain must align with the publisher domain in the entry's `identifier`. On a signed Host Trust Manifest, it must exactly equal `host.identifier`.
 
-All other fields are optional:
+A Trust Manifest must also contain substantive trust evidence: a signature, a non-empty attestation or provenance array, or a trust schema. For a signed manifest, `issuedAt` is required. A signed entry Trust Manifest also requires an artifact `subject`; a Host Trust Manifest must omit `subject`.
 
 | Field | Description |
 |---|---|
@@ -81,7 +81,7 @@ All other fields are optional:
 | `privacyPolicyUrl` | URL to the privacy policy |
 | `termsOfServiceUrl` | URL to the terms of service |
 | `signature` | Detached JWS signature over the Trust Manifest content |
-| `metadata` | Open map for custom trust metadata |
+| `extensions` | Open map for custom trust metadata |
 
 !!! tip "Attestation document format"
     Attestation documents are not restricted to any particular format — they can be human-readable (e.g., a PDF audit report) or machine-readable for automated verification (e.g., JWTs, Verifiable Credentials).
@@ -167,6 +167,11 @@ The `signature` field holds a detached JWS (RFC 7515):
 "trustManifest": {
   "identity": "urn:air:acme-corp.com:a2a:finance",
   "attestations": [...],
+  "subject": {
+    "type": "application/a2a-agent-card+json",
+    "digest": "sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+  },
+  "issuedAt": "2026-03-15T10:00:00Z",
   "signature": "eyJhbGciOiJFUzI1NiJ9..detached-jws-signature"
 }
 ```
@@ -179,6 +184,24 @@ Clients verifying signatures should:
 2. Canonicalize the remaining Trust Manifest using JCS
 3. Resolve the signing key from the identity URI
 4. Verify the JWS signature
+
+### Signing the catalog host
+
+A Host Trust Manifest signs identity and trust claims about the catalog operator, without an artifact `subject`:
+
+```json
+"host": {
+  "displayName": "Acme Corp",
+  "identifier": "did:web:acme-corp.com",
+  "trustManifest": {
+    "identity": "did:web:acme-corp.com",
+    "issuedAt": "2026-03-15T10:00:00Z",
+    "signature": "eyJhbGciOiJFUzI1NiJ9..detached-jws-signature"
+  }
+}
+```
+
+The Host Trust Manifest signature covers only the fields inside the manifest. It does not sign the surrounding `host` object, the catalog document, or a running service. Consumers must verify the signature, confirm that `host.identifier` exactly equals `trustManifest.identity`, and anchor that identity or key as the expected catalog host. Use catalog-level integrity when the surrounding catalog fields must also be protected.
 
 ## Trust layers
 
@@ -242,6 +265,12 @@ A Trust Manifest with identity, compliance attestation, provenance, and signatur
     ],
     "privacyPolicyUrl": "https://acme-corp.com/legal/privacy",
     "termsOfServiceUrl": "https://acme-corp.com/legal/terms",
+    "subject": {
+      "url": "https://agents.acme-corp.com/finance",
+      "type": "application/a2a-agent-card+json",
+      "digest": "sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+    },
+    "issuedAt": "2026-03-15T10:00:00Z",
     "signature": "eyJhbGciOiJFUzI1NiJ9..detached-jws-signature"
   }
 }

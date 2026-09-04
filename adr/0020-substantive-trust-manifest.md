@@ -6,6 +6,9 @@
 
 **Participants:** Luca Muscariello (Cisco)
 
+**Signature requirements clarified by:**
+[ADR-0026](0026-separate-host-signatures-from-artifact-subjects.md)
+
 ## Context
 
 The Trust Manifest is an OPTIONAL companion to a Catalog Entry. Within

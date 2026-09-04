@@ -184,7 +184,9 @@ The following members are OPTIONAL:
 
 `trustManifest`
 : A Trust Manifest object as defined in [Trust Manifest](#trust-manifest) providing
-  verifiable identity and trust metadata for the host itself.
+  verifiable identity and trust metadata for the host itself. A signature in
+  this manifest covers the manifest's claims, not the surrounding Host Info
+  object or catalog document.
 
 For example:
 
@@ -193,7 +195,12 @@ For example:
   "displayName": "Acme Enterprise AI",
   "identifier": "did:web:acme-corp.com",
   "documentationUrl": "https://docs.acme-corp.com/ai",
-  "logoUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0c..."
+  "logoUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0c...",
+  "trustManifest": {
+    "identity": "did:web:acme-corp.com",
+    "issuedAt": "2026-03-15T10:00:00Z",
+    "signature": "eyJhbGciOiJFUzI1NiJ9..detached-jws-signature"
+  }
 }
 ```
 
@@ -490,18 +497,20 @@ The following members are OPTIONAL:
 
 # Trust Manifest
 
-The Trust Manifest is an OPTIONAL companion to catalog entries and
-host objects. It is a JSON object that provides verifiable identity,
-attestation, and provenance metadata for AI artifacts.
+The Trust Manifest is an OPTIONAL companion to Catalog Entries and
+Host Info objects. On a Catalog Entry, it provides verifiable identity,
+attestation, and provenance metadata for an AI artifact. On a Host Info
+object, it provides the same forms of evidence for the catalog operator.
 Implementations that do not require trust metadata MAY ignore this
 section entirely — a conformant AI Catalog does not require Trust
 Manifests.
 
-The Trust Manifest does NOT wrap the artifact. It sits alongside the
-artifact as a peer element within a Catalog Entry, keeping the native
-artifact format unmodified. Publisher information is NOT duplicated
-in the Trust Manifest — the informational publisher identity is
-carried on the Catalog Entry (see [Publisher Object](#publisher-object)).
+An entry Trust Manifest does NOT wrap the artifact. It sits alongside
+the artifact as a peer element within a Catalog Entry, keeping the
+native artifact format unmodified. Publisher information is NOT
+duplicated in the Trust Manifest — the informational publisher identity
+is carried on the Catalog Entry (see
+[Publisher Object](#publisher-object)).
 
 ## Identity
 
@@ -509,8 +518,8 @@ A Trust Manifest MUST contain:
 
 `identity`
 : A string containing a globally unique URI [[RFC3986]] that serves as
-  the primary subject identifier for this artifact. This SHOULD be a
-  DID, SPIFFE ID, or URL; these are illustrative and the set of
+  the primary identity represented by this Trust Manifest. This SHOULD
+  be a DID, SPIFFE ID, or URL; these are illustrative and the set of
   identity schemes is open.
 
 When a Trust Manifest appears within a Catalog Entry, the `identity`
@@ -524,7 +533,10 @@ The `identity` is carried here so domain binding is part of the signed
 payload, rather than inferred only from unsigned entry context.
 
 When a Trust Manifest appears on a Host Info object, `identity`
-SHOULD match the host's `identifier` field when present.
+SHOULD match the host's `identifier` field when present. If the Host
+Trust Manifest carries a `signature`, the host's `identifier` MUST be
+present and MUST exactly equal `trustManifest.identity`. Consumers MUST
+reject a signed Host Trust Manifest when these values differ.
 
 When multiple entries share the same `identifier` (with different `version`
 values), each entry MAY carry its own Trust Manifest. There is no
@@ -538,12 +550,13 @@ adds nothing and misleads consumers into believing trust metadata is
 present. Beyond the required `identity`, a Trust Manifest MUST therefore
 contain at least one *substantive* trust member:
 
-- a `signature` (with its required `subject` and `issuedAt`),
+- a `signature` (with its required `issuedAt` and, for an entry Trust
+  Manifest, its required `subject`),
 - a non-empty `attestations` array,
 - a non-empty `provenance` array, or
 - a `trustSchema`.
 
-The members `identity` and `identityType` (which identify the workload
+The members `identity` and `identityType` (which identify the represented
 principal) and the informational members `privacyPolicyUrl`,
 `termsOfServiceUrl`, and `extensions` do NOT satisfy this requirement.
 `subject`, `issuedAt`, and `expiresAt` are not substantive on their own:
@@ -587,9 +600,10 @@ The following members are OPTIONAL:
 
 `subject`
 : A Subject object as defined in [Subject Binding](#subject-binding) that
-  cryptographically binds this Trust Manifest to the specific artifact it
-  describes. A Trust Manifest that carries a `signature` MUST include a
-  `subject`.
+  cryptographically binds an entry Trust Manifest to the specific artifact
+  it describes. A `subject` is permitted only in a Trust Manifest on a Catalog
+  Entry. A signed entry Trust Manifest MUST include a `subject`; a Host Trust
+  Manifest MUST NOT include one.
 
 `issuedAt`
 : A string containing an ISO 8601 [[RFC3339]] timestamp indicating when
@@ -603,10 +617,12 @@ The following members are OPTIONAL:
 
 `signature`
 : A string containing a detached JWS [[RFC7515]] signature computed over
-  the canonicalized Trust Manifest content, including the `subject` and
-  `issuedAt` members. Because the signed payload commits to the artifact
-  digest carried in `subject`, neither the trust claims nor the artifact
-  reference can be substituted without detection. See
+  the canonicalized Trust Manifest content, including `issuedAt` and every
+  other member except `signature` itself. For an entry Trust Manifest, the
+  required `subject` binds the signed claims to an artifact. For a Host Trust
+  Manifest, the signature protects the manifest's identity and trust claims
+  but does not cover the surrounding Host Info object, catalog document, or
+  any running service. See
   [Trust Manifest Signatures](#trust-manifest-signatures).
 
 `extensions`
@@ -660,12 +676,14 @@ provenance:
 
 ## Subject Binding
 
-The Subject object binds a Trust Manifest to the specific artifact it
-describes, closing the substitution gap in which an attacker who
-controls the catalog document leaves a validly-signed Trust Manifest in
-place but repoints the entry to a different artifact. Because the
-Subject is part of the signed payload, the artifact reference and its
-content digest cannot be changed without invalidating the signature.
+The Subject object is defined only for a Trust Manifest on a Catalog Entry. It
+binds the manifest to the specific artifact it describes, closing the
+substitution gap in which an attacker who controls the catalog document leaves
+a validly-signed Trust Manifest in place but repoints the entry to a different
+artifact. Because the Subject is part of the signed payload, the artifact
+reference and its content digest cannot be changed without invalidating the
+signature. A Host Trust Manifest MUST NOT contain a `subject`; see
+[Verifying Host Identity](#verifying-host-identity).
 
 A Subject object MUST contain:
 
@@ -687,9 +705,9 @@ The following member is OPTIONAL:
   MUST equal the containing Catalog Entry's `url`. Consumers MUST reject
   a Trust Manifest whose `subject.url` does not match the entry's `url`.
 
-A Trust Manifest that carries a `signature` MUST include a `subject`.
-When verifying such a manifest, consumers MUST confirm that the fetched
-artifact's media type and digest match the `subject` before relying on
+A Trust Manifest on a Catalog Entry that carries a `signature` MUST include a
+`subject`. When verifying such a manifest, consumers MUST confirm that the
+fetched artifact's media type and digest match the `subject` before relying on
 any claim in the Trust Manifest. See
 [Verifying Artifact Integrity](#verifying-artifact-integrity).
 
@@ -850,25 +868,28 @@ MUST reject digest values using algorithms shorter than SHA-256.
 ### Trust Manifest Signatures
 
 The `signature` field carries a detached JWS [[RFC7515]] computed over
-the Trust Manifest content, including the `subject` and `issuedAt`
-members. To create or verify a signature:
+the Trust Manifest content. Every signed Trust Manifest includes `issuedAt`;
+a signed entry Trust Manifest also includes `subject`, while a Host Trust
+Manifest does not. To create or verify a signature:
 
 1. **Canonicalize** the Trust Manifest JSON using JCS (JSON
    Canonicalization Scheme) [[RFC8785]]. Remove the `signature` field
-   itself before canonicalization; all other members — including
-   `subject` and `issuedAt` — remain in the signed payload.
+   itself before canonicalization; all other members — including `issuedAt`
+   and `subject` when present — remain in the signed payload.
 2. **Select an algorithm** from the allowlist in
    [Signature Algorithms](#signature-algorithms). The JWS `alg` header
    parameter MUST identify the algorithm used.
 3. **Sign** (or verify) the canonical bytes as a detached JWS payload
-   using the publisher's private (or public) key.
+   using the signer's private key (or corresponding public key).
 4. **Encode** the resulting JWS in compact serialization and store it
    in the `signature` field.
 
 This approach ensures the signature is stable regardless of JSON key
-ordering or whitespace. Because the signed payload includes the
-`subject` binding, a verified signature commits the publisher to a
-specific artifact digest, not merely to the trust claims.
+ordering or whitespace. For an entry Trust Manifest, the signed `subject`
+commits the signer to a specific artifact digest, not merely to the trust
+claims. A Host Trust Manifest instead commits the signer to the identity and
+claims inside that manifest. It does not sign the surrounding Host Info object,
+the catalog document, or a running service.
 
 Producers SHOULD avoid placing numeric values that do not round-trip
 under JCS serialization (e.g., integers outside the range exactly
@@ -924,25 +945,26 @@ DNS
 
 Verifying a Trust Manifest signature proves that the manifest was signed
 by the holder of the key associated with its `identity`. It does NOT, by
-itself, prove that the `identity` is the legitimate publisher of the
-artifact. An attacker who controls the catalog document can replace both
-the `identity` and the key it resolves to, then sign the forged manifest
-with their own key — every internal check would still pass.
+itself, prove that the `identity` is the legitimate publisher of the artifact
+or the expected host of the catalog. An attacker who controls the catalog
+document can replace both the `identity` and the key it resolves to, then sign
+the forged manifest with their own key — every internal check would still
+pass.
 
 Consumers MUST therefore anchor the `identity` (or signing key) to a
 trust root established out of band, independent of the catalog document.
 Acceptable anchors include:
 
-- A pinned allowlist of trusted publisher identities or keys.
-- A registry or marketplace that vets publisher identities and serves
+- A pinned allowlist of trusted publisher or host identities or keys.
+- A registry or marketplace that vets identities and serves
   the catalog over a channel the consumer independently trusts.
 - An identity method that proves control of a name the consumer already
-  trusts (e.g., a `did:web` whose domain matches an expected publisher,
-  validated against that domain's TLS-authenticated endpoint).
+  trusts (e.g., a `did:web` whose domain matches an expected publisher or
+  catalog host, validated against that domain's TLS-authenticated endpoint).
 
 A verified signature without an anchored identity establishes integrity
 and internal consistency only; consumers MUST NOT treat it as proof of
-publisher authenticity.
+publisher or host authenticity.
 
 ### Verifying Host Identity
 
@@ -952,8 +974,20 @@ To verify the host of a catalog:
    domain.
 2. If `host.identifier` is a DID, resolve the DID Document and confirm the
    hosting domain appears in the DID Document's `service` endpoints.
-3. If `host.trustManifest` is present and signed, verify the
-   signature as described above.
+3. If `host.trustManifest` is present and signed:
+   1. Confirm that it contains no `subject`, that `host.identifier` is present
+      and exactly equals `host.trustManifest.identity`, and that `issuedAt` is
+      present.
+   2. Verify the Host Trust Manifest signature and anchor its `identity` or key
+      as the expected catalog host, as described in
+      [Trust Anchoring](#trust-anchoring).
+
+The equality and DID service-endpoint checks establish consistency among the
+host claims, but they do not establish authenticity when every value came from
+the catalog itself. The out-of-band trust anchor supplies that assurance. A
+Host Trust Manifest signature covers only the manifest's identity and trust
+claims; consumers that need integrity for the surrounding Host Info object or
+catalog document MUST use catalog-level integrity.
 
 ### Verifying Publisher Identity
 
@@ -974,9 +1008,9 @@ binds `publisher.identifier` to the signed manifest's `identity`.
 
 ### Verifying Artifact Integrity
 
-When a Trust Manifest carries a `signature`, it MUST include a `subject`
-that binds it to the artifact (see [Subject Binding](#subject-binding)).
-To verify artifact integrity:
+When a Trust Manifest on a Catalog Entry carries a `signature`, it MUST include
+a `subject` that binds it to the artifact (see
+[Subject Binding](#subject-binding)). To verify artifact integrity:
 
 1. Verify the Trust Manifest signature
    ([Trust Manifest Signatures](#trust-manifest-signatures)) and anchor
@@ -1328,14 +1362,16 @@ In addition to Level 1 requirements, a Discoverable Catalog:
 In addition to Level 2 requirements, a Trusted Catalog:
 
 - Includes a `trustManifest` object on every entry whose trust is to be
-  relied upon, and MAY include one on the host, as defined in
-  [Trust Manifest](#trust-manifest)
-- Each such `trustManifest` MUST carry a `signature`, a `subject`
-  binding it to the artifact ([Subject Binding](#subject-binding)), and
-  an `issuedAt` timestamp
-- Consumers MUST verify the signature, anchor the identity
-  ([Trust Anchoring](#trust-anchoring)), and confirm the `subject`
-  digest before relying on any claim
+  relied upon. Each such entry Trust Manifest MUST carry a `signature`, a
+  `subject` binding it to the artifact
+  ([Subject Binding](#subject-binding)), and an `issuedAt` timestamp
+- MAY include a Host Trust Manifest. When present, it MUST carry a `signature`
+  and `issuedAt`, MUST NOT contain a `subject`, and `host.identifier` MUST be
+  present and exactly equal its `identity`
+- Consumers MUST verify and anchor every relied-upon signature. For an entry
+  Trust Manifest, they MUST also confirm the `subject` digest. For a Host Trust
+  Manifest, they MUST perform the checks in
+  [Verifying Host Identity](#verifying-host-identity)
 - SHOULD provide catalog-level integrity, either by serving the catalog
   through a content-addressed channel (see
   [Security Considerations](#security-considerations)) or by including a
@@ -1376,18 +1412,19 @@ appropriate to their threat model.
   catalog-level substitution.**
 
 **Layer 2 — Signed Trust Manifest**
-: The Trust Manifest includes a `signature` field (detached JWS) and a
-  `subject` that binds the signature to the artifact's content digest
-  (see [Subject Binding](#subject-binding)). The consumer verifies the
-  signature, anchors the signer's identity to a trust root
-  ([Trust Anchoring](#trust-anchoring)), and confirms the `subject`
-  digest before trusting any claim. This closes the substitution gap
-  from Layer 1: because the signed payload commits to the artifact
-  digest, an attacker cannot repoint the entry to a different artifact
-  or forge claims without the publisher's private key. Consumers that
-  rely on trust metadata MUST verify signatures and MUST reject Trust
-  Manifests whose signature does not validate, whose `subject` does not
-  match the fetched artifact, or whose identity cannot be anchored.
+: An entry Trust Manifest includes a `signature` field (detached JWS) and a
+  `subject` that binds the signature to the artifact's content digest (see
+  [Subject Binding](#subject-binding)). The consumer verifies the signature,
+  anchors the signer's identity to a trust root
+  ([Trust Anchoring](#trust-anchoring)), and confirms the `subject` digest
+  before trusting any claim. This closes the substitution gap from Layer 1:
+  because the signed payload commits to the artifact digest, an attacker cannot
+  repoint the entry to a different artifact or forge claims without the
+  signer's private key. A signed Host Trust Manifest has no artifact `subject`;
+  it protects the identity and trust claims inside the manifest itself.
+  Consumers that rely on trust metadata MUST verify signatures and anchor their
+  identities, and MUST reject an entry Trust Manifest whose `subject` does not
+  match the fetched artifact.
 
 **Layer 3 — Content-Addressed Distribution (OCI)**
 : The catalog is distributed through an OCI registry where all content
@@ -1427,9 +1464,9 @@ this threat:
   unauthorized modification.
 - **Layer 1** enables post-fetch integrity checks but does not prevent
   whole-entry substitution.
-- **Layer 2** binds the signed Trust Manifest to the artifact digest
-  via `subject`, preventing both Trust Manifest forgery and artifact
-  substitution under a valid signature.
+- **Layer 2** binds a signed entry Trust Manifest to the artifact digest via
+  `subject`, preventing both Trust Manifest forgery and artifact substitution
+  under a valid signature.
 - **Layer 3** makes modification structurally impossible through
   content-addressing.
 
@@ -1441,10 +1478,10 @@ document can attempt to substitute the artifact, the Trust Manifest, or
 both. This specification defends against substitution with three
 compounding mechanisms:
 
-- **Subject binding.** A signed Trust Manifest MUST include a `subject`
+- **Subject binding.** A signed entry Trust Manifest MUST include a `subject`
   that commits to the artifact's media type and content digest (see
-  [Subject Binding](#subject-binding)). The artifact reference therefore
-  cannot be changed without invalidating the signature.
+  [Subject Binding](#subject-binding)). The artifact reference therefore cannot
+  be changed without invalidating the signature.
 - **Trust anchoring.** A signature is only meaningful once the signer's
   identity is anchored to a trust root established out of band (see
   [Trust Anchoring](#trust-anchoring)); otherwise an attacker can sign a
@@ -1714,8 +1751,17 @@ TrustManifest = {
   ? provenance: [* ProvenanceLink],
   ? privacyPolicyUrl: text,
   ? termsOfServiceUrl: text,
+  ? subject: Subject,
+  ? issuedAt: tdate,
+  ? expiresAt: tdate,
   ? signature: text,
   ? extensions: { * text => any }
+}
+
+Subject = {
+  type: text,
+  digest: text,
+  ? url: text
 }
 
 TrustSchema = {
