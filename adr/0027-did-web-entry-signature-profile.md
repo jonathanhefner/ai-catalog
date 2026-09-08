@@ -98,6 +98,16 @@ and verification result. The important application choices are that `alg` is
 must be authorized by `assertionMethod`. Merely listing a key under
 `verificationMethod`, `authentication`, or `keyAgreement` is insufficient.
 
+Existing DID documents can use relative method IDs and verification-relationship
+references such as `#release-signing-key`. The profile explicitly applies DID
+Core's relative-URL rules to those documents despite did:web's absolute-only
+requirement, so adopting AI Catalog does not require publishers to rewrite
+otherwise usable DID documents. References resolve against the validated issuer
+DID, never the HTTPS retrieval URL. The signature's `kid` stays absolute, and
+key selection must remain unambiguous within the issuer's document. Resolver
+validation must honor the exception before returning the document to the
+verifier; resolving shorthand after a resolver has rejected it is insufficient.
+
 No `typ` header is required. The signature appears in a specifically defined
 Trust Manifest field, so the containing data model supplies the application
 context. A future need for cross-protocol token separation can be addressed by

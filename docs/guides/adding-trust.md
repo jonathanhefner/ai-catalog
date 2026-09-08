@@ -190,6 +190,17 @@ The signature is computed over the Trust Manifest content using JCS (RFC 8785) c
 
 The verifier retrieves the current DID document from `https://acme-corp.com/.well-known/did.json`. The key selected by `kid` must be an ES256 P-256 JWK authorized by the DID document's `assertionMethod` relationship. A key listed only for authentication or key agreement cannot sign an AI Catalog Trust Manifest.
 
+An existing DID document can use shorthand for its key references. For example,
+a document with `id` equal to `did:web:acme-corp.com` can give a verification
+method the `id` `#release-signing-key` and list `#release-signing-key` in
+`assertionMethod`. Both resolve to the absolute signature `kid`
+`did:web:acme-corp.com#release-signing-key`. Publishers do not need to expand
+these DID Core references to adopt this profile. Verifiers, including their
+DID resolvers, must support the profile's relative-reference exception to
+did:web's absolute-only rule, using the document's validated DID as the base.
+References in other verification relationships may also use shorthand; those
+relationships do not authorize a Trust Manifest signature.
+
 Clients verifying signatures should:
 
 1. Extract the `signature` field and remove it from the object
