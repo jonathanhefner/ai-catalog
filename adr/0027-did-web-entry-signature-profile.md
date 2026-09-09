@@ -93,26 +93,22 @@ is authorized to speak for the publisher namespace.
 
 The normative profile specifies the detached JWS construction, protected
 headers, key representation, DID resolution, verification-method selection,
-and verification result. The important application choices are that `alg` is
-`ES256`, `kid` identifies one method under the exact issuer DID, and that method
-must be authorized by `assertionMethod`. Merely listing a key under
-`verificationMethod`, `authentication`, or `keyAgreement` is insufficient.
-
-Existing DID documents can use relative method IDs and verification-relationship
-references such as `#release-signing-key`. The profile explicitly applies DID
-Core's relative-URL rules to those documents despite did:web's absolute-only
-requirement, so adopting AI Catalog does not require publishers to rewrite
-otherwise usable DID documents. References resolve against the validated issuer
-DID, never the HTTPS retrieval URL. The signature's `kid` stays absolute, and
-key selection must remain unambiguous within the issuer's document. Resolver
-validation must honor the exception before returning the document to the
-verifier; resolving shorthand after a resolver has rejected it is insufficient.
+and verification result. The signature uses `ES256`, and its absolute `kid`
+identifies one verification method under the exact issuer DID.
 
 No `typ` header is required. The signature appears in a specifically defined
 Trust Manifest field, so the containing data model supplies the application
 context. A future need for cross-protocol token separation can be addressed by
 a separate profile rather than adding a marker without a demonstrated
 ambiguity.
+
+The selected key must be authorized by the DID document's `assertionMethod`
+relationship; merely listing it under `verificationMethod`, `authentication`,
+or `keyAgreement` is insufficient. To let publishers reuse existing DID
+documents, the profile accepts references using DID Core's relative-URL rules
+in place of the `did:web` method's absolute-only restriction. This preserves
+the publisher's existing key descriptions while retaining an absolute `kid`
+and exact issuer authorization.
 
 A Trust Manifest is verified only after the issuer, signature, signed subject,
 Catalog Entry, and artifact all satisfy their respective checks. Failure does

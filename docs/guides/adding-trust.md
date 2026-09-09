@@ -188,18 +188,9 @@ The `signature` field holds a detached JWS (RFC 7515):
 
 The signature is computed over the Trust Manifest content using JCS (RFC 8785) canonicalization. The stored value is a detached compact JWS with a protected `alg` header of `ES256` and an absolute DID URL in `kid`, such as `did:web:acme-corp.com#release-signing-key`.
 
-The verifier retrieves the current DID document from `https://acme-corp.com/.well-known/did.json`. The key selected by `kid` must be an ES256 P-256 JWK authorized by the DID document's `assertionMethod` relationship. A key listed only for authentication or key agreement cannot sign an AI Catalog Trust Manifest.
+The verifier retrieves the current DID document from `https://acme-corp.com/.well-known/did.json` and confirms that its `id` matches the issuer, `did:web:acme-corp.com`. Under the profile's [DID-document processing rules](https://agent-card.github.io/ai-catalog/spec/#did-document-resolution-and-key-selection), the document can retain relative method IDs and references. For example, a method's `id` and its reference in `assertionMethod` can both be `#release-signing-key`; resolving them against the document's DID produces the absolute `kid` shown above.
 
-An existing DID document can use shorthand for its key references. For example,
-a document with `id` equal to `did:web:acme-corp.com` can give a verification
-method the `id` `#release-signing-key` and list `#release-signing-key` in
-`assertionMethod`. Both resolve to the absolute signature `kid`
-`did:web:acme-corp.com#release-signing-key`. Publishers do not need to expand
-these DID Core references to adopt this profile. Verifiers, including their
-DID resolvers, must support the profile's relative-reference exception to
-did:web's absolute-only rule, using the document's validated DID as the base.
-References in other verification relationships may also use shorthand; those
-relationships do not authorize a Trust Manifest signature.
+The key selected by `kid` must be an ES256 P-256 JWK authorized by the DID document's `assertionMethod` relationship. A key listed only for authentication or key agreement cannot sign an AI Catalog Trust Manifest.
 
 Clients verifying signatures should:
 

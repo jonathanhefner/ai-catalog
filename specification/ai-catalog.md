@@ -985,34 +985,25 @@ DID or an external key document.
 #### DID Document Resolution and Key Selection
 
 The verifier MUST resolve `identity` according to the `did:web` method
-[[DIDWEB]] and process the result as a DID document according to DID Core
-[[DIDCORE]]. The resolution MUST satisfy the safe-fetching requirements in
-[Safe Fetching](#safe-fetching). Resolution fails under the `did:web` Publisher
-Profile if the DID document cannot be retrieved and validated or if its `id` is
-not exactly equal to `identity`.
-
-For compatibility with existing DID documents, this profile permits relative
-DID URLs wherever DID Core permits them, including verification-method IDs
-and references in verification relationships. For these values, DID Core's
-relative-DID-URL rules take precedence over the absolute-URL-only requirement
-in [[DIDWEB]]. Consumers MUST NOT reject an otherwise valid DID document solely
-because it contains such relative DID URLs. This exception applies during DID
-document validation, including validation performed by a resolver.
-
-Consumers MUST resolve these relative DID URLs against the DID document's
-`id`, after confirming that it exactly equals `identity`, using the rules in
-DID Core. The HTTPS retrieval URL MUST NOT be used as the base. This does not
-relax the absolute `kid` requirement or the exact issuer and controller
-requirements. Selection remains confined to verification methods in the
-issuer's DID document; consumers MUST NOT retrieve an external verification
-method to satisfy `kid`.
+[[DIDWEB]], observing the safe-fetching requirements in
+[Safe Fetching](#safe-fetching), and process the result as a DID document
+according to DID Core [[DIDCORE]]. To accommodate existing DID documents,
+validation MUST accept relative DID URLs wherever DID Core permits them,
+including verification-method IDs and verification-relationship references.
+This rule takes precedence over the absolute-URL-only requirement in
+[[DIDWEB]] and applies whether validation is performed by the verifier or its
+resolver. Resolution fails if the document cannot be retrieved and validated
+or if its `id` is not exactly equal to `identity`.
 
 The verification method selected by `kid` MUST be authorized by the DID
 document's `assertionMethod` verification relationship. An
 `assertionMethod` entry can contain the verification method directly or can
-reference a method in the top-level `verificationMethod` collection. After
-resolving relative DID URLs as defined by DID Core, the verifier MUST select
-exactly one verification method whose resolved `id` exactly equals `kid`.
+reference a method in the top-level `verificationMethod` collection. Consumers
+MUST resolve relative DID URLs using DID Core's rules with the validated
+DID document's `id` as the base, never the HTTPS retrieval URL, and select
+exactly one verification method whose resolved `id` exactly equals the
+absolute `kid`. Selection is confined to the issuer's DID document; consumers
+MUST NOT retrieve an external verification method to satisfy `kid`.
 
 A key's presence in the top-level `verificationMethod` collection does not by
 itself authorize the key to sign a Trust Manifest. A key used only for another
