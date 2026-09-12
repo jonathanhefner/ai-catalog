@@ -10,6 +10,11 @@
 supersedes this ADR's description of `identity` as a workload principal. The
 manifest-validity rule established here remains unchanged.
 
+**Later revision:** [ADR-0028](0028-identity-keyed-trust-manifests.md) moves
+signatures outside contributor manifests and permits non-empty contributor
+extensions to supply the required substance. The original decision below
+records the previous single-manifest structure.
+
 ## Context
 
 The Trust Manifest is an OPTIONAL companion to a Catalog Entry. Within

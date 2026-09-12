@@ -1,0 +1,88 @@
+{
+  "description": "TEST ONLY public key and fixed golden detached ES256 signatures; no production identity or DID authorization asserted.",
+  "kid": "did:web:publisher.example#fixture-key",
+  "publicKey": {
+    "kty": "EC",
+    "x": "tfBw2kSPUmHOY0XiItPcmXFgEo4DUPjniCaKg_1kW44",
+    "y": "gN_9qZ8aQ6bkf8fGkPz4gjyHLCWq4IgNgpxnqCC-U-M",
+    "crv": "P-256"
+  },
+  "artifactUtf8": "{\"name\":\"Example artifact\"}",
+  "entry": {
+    "identifier": "urn:air:publisher.example:agent:example",
+    "type": "application/json",
+    "version": "1.0.0",
+    "digest": "sha256:56bbd2ff730d81a52951fc2f58809dfb086b4be7a82766dcc18cfe32ff6acbbd",
+    "url": "https://publisher.example/agent.json",
+    "trustManifests": {
+      "did:web:publisher.example": {
+        "attestations": [
+          {
+            "type": "SOC2-Type2",
+            "uri": "https://publisher.example/report.pdf"
+          }
+        ],
+        "provenance": [
+          {
+            "relation": "publishedFrom",
+            "sourceId": "https://example.com/source"
+          },
+          {
+            "relation": "derivedFrom",
+            "sourceId": "https://example.com/base"
+          }
+        ],
+        "extensions": {
+          "https://example.com/nullable": null,
+          "https://example.com/opaque": {
+            "signatures": []
+          }
+        }
+      }
+    }
+  },
+  "signature": {
+    "paths": [
+      [
+        "version"
+      ],
+      [
+        "trustManifests",
+        "did:web:publisher.example"
+      ],
+      [
+        "type"
+      ],
+      [
+        "identifier"
+      ],
+      [
+        "digest"
+      ]
+    ],
+    "issuedAt": "2026-09-12T00:00:00Z",
+    "expiresAt": "2026-09-13T00:00:00Z",
+    "jws": "eyJhbGciOiJFUzI1NiIsImtpZCI6ImRpZDp3ZWI6cHVibGlzaGVyLmV4YW1wbGUjZml4dHVyZS1rZXkifQ..nubw_wNZYZYix6reLfTKA8In44b2kUdkyouMJzBusP5wkKTcC4G43tMTdVddlTdIu88_cy5f3Qtucp72mmN8_g"
+  },
+  "canonicalPayload": "{\"context\":\"ai-catalog-entry-signature-v1\",\"expiresAt\":\"2026-09-13T00:00:00Z\",\"fields\":[[[\"digest\"],\"sha256:56bbd2ff730d81a52951fc2f58809dfb086b4be7a82766dcc18cfe32ff6acbbd\"],[[\"identifier\"],\"urn:air:publisher.example:agent:example\"],[[\"trustManifests\",\"did:web:publisher.example\"],{\"attestations\":[{\"type\":\"SOC2-Type2\",\"uri\":\"https://publisher.example/report.pdf\"}],\"extensions\":{\"https://example.com/nullable\":null,\"https://example.com/opaque\":{\"signatures\":[]}},\"provenance\":[{\"relation\":\"publishedFrom\",\"sourceId\":\"https://example.com/source\"},{\"relation\":\"derivedFrom\",\"sourceId\":\"https://example.com/base\"}]}],[[\"type\"],\"application/json\"],[[\"version\"],\"1.0.0\"]],\"issuedAt\":\"2026-09-12T00:00:00Z\"}",
+  "unversionedSignature": {
+    "paths": [
+      [
+        "trustManifests",
+        "did:web:publisher.example"
+      ],
+      [
+        "type"
+      ],
+      [
+        "identifier"
+      ],
+      [
+        "digest"
+      ]
+    ],
+    "issuedAt": "2026-09-12T00:00:00Z",
+    "expiresAt": "2026-09-13T00:00:00Z",
+    "jws": "eyJhbGciOiJFUzI1NiIsImtpZCI6ImRpZDp3ZWI6cHVibGlzaGVyLmV4YW1wbGUjZml4dHVyZS1rZXkifQ..Qo_jZwDg3oxdpN18gMcJIIrwGTONzugJdSj8jTWhAGHU-8Is0wqNIqRU_QunSLGM3fG7jdAA75kj3iqoRWSNJg"
+  }
+}

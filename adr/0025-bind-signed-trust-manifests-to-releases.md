@@ -1,8 +1,10 @@
 # ADR-0025: Bind Signed Trust Manifests to Artifact Releases
 
-**Status:** Proposed
+**Status:** Superseded in part by [ADR-0028](0028-identity-keyed-trust-manifests.md)
 
 **Date:** 2026-09-03
+
+> Historical decision: ADR-0028 replaces the duplicated `subject` structure with signatures over entry fields. The release-coordinate and artifact-representation binding requirements established here are preserved; the separate `subject.version` portability option is replaced by `entry.version`. The discussion below records the original design.
 
 ## Context
 

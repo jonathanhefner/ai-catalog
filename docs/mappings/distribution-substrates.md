@@ -1,7 +1,7 @@
 # Mapping to Distribution Substrates
 
 The AI Catalog specification defines a **logical format**: a JSON
-document with `entries`, `displayName`, `type`, and `trustManifest`
+document with `entries`, `displayName`, `type`, and `trustManifests`
 fields that are immediately meaningful to anyone working with AI
 artifacts. Authors write simple JSON. APIs serve simple JSON. Clients
 consume simple JSON.
@@ -20,12 +20,12 @@ Authoring                      Distribution                    Consumption
 ─────────                      ────────────                    ───────────
 ai-catalog.json   ──pack──►   OCI / xRegistry / HTTP  ──unpack──►   ai-catalog.json
   entries[]                     substrate-native form                entries[]
-  trustManifest                                                      trustManifest
+  trustManifests                                                      trustManifests
 ```
 
 This separation keeps authoring and consumption simple: publishers and
 clients work with domain vocabulary (`entries`, `displayName`,
-`type`, `trustManifest`), while infrastructure that wants
+`type`, `trustManifests`), while infrastructure that wants
 content-addressing, signing, replication, or registry APIs uses whichever
 binding below matches its substrate.
 
@@ -40,9 +40,9 @@ a pack/unpack round-trip.
 | Entry identity (`identifier`) | A stable, addressable identity for each entry |
 | Artifact content + `type` | The artifact bytes are retrievable together with their media type |
 | Catalog structure / nesting | Nested catalogs remain navigable as a hierarchy |
-| Trust Manifest association | An entry's Trust Manifest is discoverable from that entry |
-| Content integrity | The served bytes are verifiably bound to `trustManifest.subject.digest` |
-| Signing | The Trust Manifest's authenticity is cryptographically verifiable |
+| Trust Manifest association | An entry's Trust Manifests and their contributor identity keys are recoverable |
+| Content integrity | The served bytes are verifiably bound to `entry.digest` |
+| Signing | Selected fields, signer identity, and signature timestamps remain verifiable |
 
 ## Delegate, Don't Duplicate
 
@@ -51,24 +51,33 @@ content-addressed and has first-class signing (Cosign/Notation);
 xRegistry is a hierarchical resource API with versioning and
 cross-referencing but no native digest or signature primitive.
 
-To avoid expressing the same guarantee twice, a binding **delegates** an
-invariant to a native substrate primitive when one exists, and otherwise
-**carries** it in the logical Trust Manifest. A binding MUST NOT restate,
-in substrate vocabulary, a guarantee it has delegated, and MUST NOT drop
-a guarantee the substrate cannot express.
+A binding can **delegate** an invariant when a native primitive supplies
+the same guarantee, and otherwise **carries** the logical data needed to
+preserve it. The existence of native signing does not make its signer or
+covered claims equivalent to a logical AI Catalog endorsement. A binding
+MUST NOT drop a guarantee the substrate cannot reproduce.
 
 | Invariant | OCI primitive (delegate) | xRegistry primitive (delegate) | Carried fallback |
 |:---|:---|:---|:---|
 | Identity | Repository path + digest | `resourceid` / `xid` | `entry.identifier` |
 | Content + media type | `layers[0]` + `artifactType` | Resource document + `contenttype` | Entry artifact + `type` |
 | Nesting | Nested Image Index | Nested Group / `xref` | Nested entry |
-| Manifest association | Referrers API (`subject`) | `xref` / extension attribute | Inline `trustManifest` |
-| Content integrity | Content-addressed digest | *(none — carried)* | `subject.digest` |
-| Signing | Cosign / Notation referrer | *(none — carried)* | Detached JWS in Trust Manifest |
+| Manifest association | Referrers API (`subject`) | `xref` / extension attribute | Inline `trustManifests` |
+| Content integrity | Content-addressed digest | *(none — carried)* | `entry.digest` |
+| Signing | Cosign / Notation referrer for native OCI endorsements | *(none — carried)* | Entry `signatures` |
+
+Native substrate signatures do not automatically reproduce a contributor's
+logical signature. To preserve existing AI Catalog signatures, retain their
+objects and every selected value so that the same payload can be reconstructed.
+This applies to entry, host, and catalog signatures. Preserve original array
+order and optional-member presence where covered; store additional logical
+metadata when the substrate cannot reconstruct it. In particular, a complete
+catalog snapshot signature requires the original entries array, including
+nested signatures, rather than a newly ordered listing of registry resources.
 
 The [OCI Distribution](oci-distribution.md) and [xRegistry](xregistry.md)
 mappings are concrete bindings of this contract. The OCI binding delegates
-the most (identity, content integrity, signing); the xRegistry binding
+identity and content integrity and adds native signing; the xRegistry binding
 delegates structure, identity, and discovery but carries content integrity
 and signing because xRegistry has no native primitive for them.
 
