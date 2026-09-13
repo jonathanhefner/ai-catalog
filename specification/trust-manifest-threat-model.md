@@ -17,6 +17,7 @@ This document is the security analysis that motivates the normative
 hardening in [ai-catalog.md](ai-catalog.md) and the decisions recorded
 in [ADR-0019](../adr/0019-trust-manifest-artifact-binding.md),
 [ADR-0025](../adr/0025-bind-signed-trust-manifests-to-releases.md),
+[ADR-0026](../adr/0026-remove-host-trust-manifests.md),
 [ADR-0027](../adr/0027-did-web-entry-signature-profile.md), and
 [ADR-0009](../adr/0009-trust-manifest-substitution.md). It exists to
 answer the substitution-attack concern raised in ADR-0009: *"The
@@ -58,7 +59,7 @@ Attacker
 ### 1.2 Data stores
 
 - Catalog document (`application/ai-catalog+json`)
-- Trust Manifest (peer element on an entry or host)
+- Trust Manifest (peer element on an entry)
 - Artifact bytes (served at `entry.url` or inlined in `entry.data`)
 - Attestation documents
 - Key material (DID documents and JSON Web Keys)
@@ -341,6 +342,12 @@ while letting trust-sensitive deployments inherit Sigstore's full chain
 
 ## 8. Residual Risks
 
+- **Catalog-operator authentication.** HTTPS from an expected domain can
+  authenticate the transport endpoint, but a DID service-endpoint check alone
+  does not authenticate attacker-selected Host Info. A catalog signature can
+  protect the snapshot only after its signer and key are independently
+  authorized; the catalog-signature profile does not yet define that
+  authorization.
 - **Domain and policy roots.** The `did:web` profile inherits the consumer's DNS
   and Web PKI trust roots. It authenticates control of a publisher namespace;
   it does not decide whether that publisher is reputable or authorized by a
