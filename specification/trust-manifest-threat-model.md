@@ -38,7 +38,7 @@ The replacement preserves the security properties addressed by the findings:
 
 - **F1 and F11:** entry endorsements bind the artifact identifier, media type,
   digest, and version when present directly, preventing representation swaps and
-  release relabeling without a duplicated `subject`.
+  release relabeling.
 - **F2 and F3:** a manifest identity key attributes claims but is not proof of
   authorship. Contributor attribution requires that contributor's authenticated
   endorsement. Publisher authorization additionally requires the publisher
@@ -59,8 +59,7 @@ The replacement preserves the security properties addressed by the findings:
 
 Whole-manifest selection provides the ordinary contributor boundary. Adding
 another identity's bundle need not change an existing selected bundle. Updating
-a selected bundle requires a new endorsement; the map does not automatically
-combine competing updates under the same identity. The residual risks below
+a selected bundle requires a new endorsement. The residual risks below
 continue to apply, with contributor signing keys as well as publisher keys in
 scope.
 

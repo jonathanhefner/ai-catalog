@@ -524,10 +524,9 @@ Every key in `trustManifests` MUST be an absolute URI [[RFC3986]] identifying
 the contributor to which that value's claims are attributed. The identity
 identifies the contributor asserting the references or claims, not necessarily
 the issuer of every referenced attestation or provenance statement. Authors
-SHOULD use their existing identity URI, such as `did:web:assessor.example`;
-no identifier needs to be invented for each evidence record. Keys MUST be
-preserved exactly when forwarding signed content. Consumers MUST NOT infer
-authentication from a key's spelling or mere presence.
+SHOULD use their existing identity URI, such as `did:web:assessor.example`.
+Keys MUST be preserved exactly when forwarding signed content. Consumers
+MUST NOT infer authentication from a key's spelling or mere presence.
 
 A signature authenticated as that contributor, covering the relevant claims
 and the entry release, authenticates their attribution under the applicable
@@ -555,16 +554,17 @@ fields. Its `attestations` and `provenance` remain arrays; updating a selected
 array, including changing its order, requires a new signature. The same
 identity MAY publish an updated manifest for the same release.
 
-When choosing among updates for the same identity and release, consumers
-SHOULD prefer the manifest covered in full by that contributor's most recent
-acceptable signature, comparing authenticated `issuedAt` instants. A more
+Two registries may retrieve a contributor's manifest at different times and
+hold different signed versions. When choosing among updates for the same
+identity and release, consumers SHOULD prefer the manifest covered in full by
+that contributor's most recent acceptable signature, comparing authenticated
+`issuedAt` instants. A more
 recent signature by another entity does not establish a contributor update.
 An issuance time is the signer's assertion, not an independently trusted
 clock. Equal issuance times with different content require local selection
 policy; consumers MUST NOT infer an ordering from map order. Registries SHOULD
 preserve the chosen manifest and its signatures rather than merge separately
-signed contents. This specification does not provide a history store or a
-guarantee that the most recent update has been received.
+signed contents.
 
 ## Manifest Validity
 
@@ -787,7 +787,7 @@ future changes to this construction require a new signature format version.
 
 `issuedAt`
 : An RFC 3339 [[RFC3339]] timestamp asserting when this endorsement was issued.
-  The timestamp is authenticated as part of the payload, not a JWS header.
+  The timestamp is authenticated as part of the payload.
 
 `expiresAt`
 : An OPTIONAL RFC 3339 timestamp after which this endorsement is stale.

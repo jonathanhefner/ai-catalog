@@ -99,7 +99,7 @@ The `relation` field is an open string. Three common values:
 
 ## Signing an entry
 
-Each object in `entry.signatures` contains `paths`, `issuedAt`, optional `expiresAt`, and `jws`. Paths are arrays of object keys relative to the entry. Arrays of values, such as attestations, are selected whole; paths do not traverse array elements. URL and DID keys are written literally, without JSON Pointer escaping.
+Each object in `entry.signatures` contains `paths`, `issuedAt`, optional `expiresAt`, and `jws`. Paths are arrays of object keys relative to the entry. Arrays of values, such as attestations, are selected whole; paths do not traverse array elements. Each path element is the exact object key; for example, `["extensions", "https://example.com/metadata"]` selects one entry extension.
 
 A typical contributor signature selects the entire manifest plus the artifact-binding fields:
 
