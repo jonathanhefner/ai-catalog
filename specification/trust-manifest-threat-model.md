@@ -24,6 +24,45 @@ answer the substitution-attack concern raised in ADR-0009: *"The
 substitution attack of changing out the trust manifest is very real,
 especially if there's no tamper-proofness built in."*
 
+## Current design and historical scope
+
+The analysis below records the single-manifest design and its hardening through
+ADR-0027. Its old field paths and references to a publisher-only manifest issuer
+are a historical snapshot, not the current normative schema.
+[ADR-0028](../adr/0028-identity-keyed-trust-manifests.md) replaces that structure
+with identity-keyed contributor manifests and selective signatures on entries,
+Host Info, and the catalog root. The current requirements are in
+[the specification](ai-catalog.md).
+
+The replacement preserves the security properties addressed by the findings:
+
+- **F1 and F11:** entry endorsements bind the artifact identifier, media type,
+  digest, and version when present directly, preventing representation swaps and
+  release relabeling.
+- **F2 and F3:** a manifest identity key attributes claims but is not proof of
+  authorship. Contributor attribution requires that contributor's authenticated
+  endorsement. Publisher authorization additionally requires the publisher
+  identity for the signed artifact namespace. Another party's valid endorsement
+  proves neither of those roles automatically.
+- **F4 and F10:** detached JWS, protected algorithm/key metadata, the initial
+  ES256 profile, and JCS remain. Selected paths, values, signing context, and
+  timestamps are authenticated together.
+- **F5:** issuance and expiration now belong to each signature. A newer valid
+  contributor endorsement can identify an updated bundle among those observed;
+  timestamps do not prove global freshness or prevent rollback by themselves.
+- **F6 and F9:** root, host, and entry signatures can select metadata directly.
+  Consumers must check coverage and signer authority; a partial endorsement is
+  not a complete catalog snapshot signature.
+- **F7 and F8:** safe fetching and evidence-format-specific verification remain
+  necessary. An entry signature over a reference does not establish the
+  referenced evidence's issuer or validate its contents.
+
+Whole-manifest selection provides the ordinary contributor boundary. Adding
+another identity's bundle need not change an existing selected bundle. Updating
+a selected bundle requires a new endorsement. The residual risks below
+continue to apply, with contributor signing keys as well as publisher keys in
+scope.
+
 ## 1. System Decomposition
 
 ### 1.1 External entities

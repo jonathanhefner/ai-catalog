@@ -8,13 +8,12 @@ container-oriented vocabulary (`manifests`, `layers`, `config`, `digest`)
 that does not naturally describe a catalog of AI artifacts, so tooling
 bridges the logical format and the OCI representation.
 
-Of the binding invariants, the OCI binding **delegates** identity,
-content integrity, and signing to OCI's own primitives. Consequently
-`trustManifest.subject.digest` is expected to equal the OCI descriptor
-digest of the served artifact, and the detached JWS in the Trust Manifest
-MAY be omitted from the packed representation because Cosign/Notation
-referrers carry signing instead. Unpacking reconstitutes (or re-signs)
-the logical Trust Manifest from those referrers.
+OCI provides content-addressing and native signatures for its own objects.
+For a URL artifact stored unchanged as a layer, `entry.digest` can correspond
+to the layer descriptor digest. For inline JSON, preserve the specification's
+canonicalization rules instead of substituting the digest of a different encoding.
+Preserve logical entry signatures and all values they select when packing;
+a native OCI signature does not recreate the original contributor's endorsement.
 
 ## Conceptual Mapping
 
@@ -30,9 +29,10 @@ concepts to their OCI physical equivalents:
 | Entry artifact content | Manifest `layers[0]` blob (the protocol-specific document) |
 | Entry metadata (name, tags, publisher) | Manifest `config` blob and/or `annotations` |
 | Nested Catalog Entry | Nested OCI Image Index referenced from the parent index |
-| Trust Manifest | OCI Referrer artifact with `subject` pointing to the entry manifest |
+| Contributor Trust Manifest | OCI Referrer artifact with `subject` pointing to the entry manifest; preserve the contributor identity key |
 | Trust Manifest attestations | Individual OCI Referrer artifacts per attestation |
-| Signing | Cosign / Notation signatures as OCI Referrers |
+| Logical signing | Preserve entry `signatures` with the logical entry metadata |
+| OCI signing | Cosign / Notation signatures as OCI Referrers |
 
 ## Packing: AI Catalog to OCI
 
@@ -47,7 +47,9 @@ Tooling converts an AI Catalog JSON document into OCI artifacts:
    array references the per-entry manifests by digest.
 
 3. **Trust Manifests** become OCI Referrer artifacts attached to their
-   entry manifests via the `subject` field. Attestation documents
+   entry manifests via the OCI `subject` field, preserving their contributor
+   identity keys. Preserve entry digests and signatures in the entry metadata.
+   Attestation documents
    (JWTs, PDFs, SLSA provenance) become individual referrer layers.
 
 4. **Nested catalog entries** become nested OCI Image Indexes.
@@ -78,7 +80,7 @@ Tooling converts OCI artifacts back to an AI Catalog JSON document:
 3. Query the Referrers API for each manifest to discover Trust
    Manifests and attestations.
 4. Assemble the logical AI Catalog JSON with `entries[]` and
-   `trustManifest` fields.
+   `trustManifests`, `digest`, and `signatures` fields, preserving all selected values.
 
 The result is a standard `application/ai-catalog+json` document
 indistinguishable from one authored by hand.
@@ -125,8 +127,7 @@ authored by hand:
 
 ## Signing and Verification
 
-Because OCI distribution uses content-addressed digests, signing is
-handled by existing OCI tooling rather than embedded signature fields:
+Existing OCI tooling can additionally sign the packed OCI objects:
 
 ```
 # Sign an entry manifest
@@ -140,9 +141,10 @@ cosign attest --predicate provenance.json --type slsaprovenance \
   registry.example.com/ai/finance-a2a@sha256:aaa111...
 ```
 
-These signatures and attestations are discoverable via the OCI
-Referrers API and can be mapped back to Trust Manifest attestation
-objects during unpacking.
+Native signatures and attestations are discoverable through the applicable
+OCI tooling. They may supply referenced evidence, but are separate from
+entry signatures over selected logical fields. Unpacking must preserve the
+original logical signatures; re-signing would produce a new endorsement.
 
 ## Relationship to OCI-Native Proposals
 
@@ -158,14 +160,14 @@ tradeoffs are:
 | Concern | Logical-first (this spec) | OCI-native |
 |:---|:---|:---|
 | Authoring | Write simple JSON with domain vocabulary | Write JSON conforming to OCI Manifest schema |
-| Vocabulary | `entries`, `displayName`, `type`, `trustManifest` | `manifests`, `layers`, `config`, `annotations` |
+| Vocabulary | `entries`, `displayName`, `type`, `trustManifests` | `manifests`, `layers`, `config`, `annotations` |
 | Minimum viable serving | Static JSON file at any URL (optionally well-known) | OCI registry or static OCI layout |
 | Signing | Detached JWS in logical format; Cosign/Notation in OCI | Cosign/Notation only |
-| Content integrity | Optional digests in Trust Manifest | Guaranteed by OCI content-addressing |
+| Content integrity | Optional entry digests | Guaranteed by OCI content-addressing |
 | Ecosystem compatibility | Any HTTP server, any registry, any CDN | OCI-compliant registries |
 | Adoption barrier | Low — familiar JSON | Higher — requires OCI familiarity |
 
-Both approaches can coexist. A tooling bridge converts between them
-losslessly, allowing simple consumers to work with the logical format
-while infrastructure-oriented deployments leverage OCI distribution.
+Both approaches can coexist. A bridge must retain the logical metadata and
+selected values to provide a lossless round-trip while distributing artifact
+content through OCI.
 

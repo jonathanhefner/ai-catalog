@@ -50,6 +50,7 @@ The `host` object identifies who operates the catalog. Adding it upgrades you to
 | `identifier` | Verifiable identifier — a DID, domain name, or other URI |
 | `documentationUrl` | URL to your AI platform documentation |
 | `logoUrl` | URL to your logo. Use a Data URI to avoid leaking client info through image requests |
+| `signatures` | Signatures over selected Host Info fields (see [Adding Trust](adding-trust.md)) |
 
 ## Catalog entries
 
@@ -108,7 +109,11 @@ Enrich your entries with additional metadata:
 | `version` | string | Artifact version. Semantic versioning recommended |
 | `updatedAt` | string | ISO 8601 timestamp of last modification |
 | `publisher` | object | Who publishes this artifact (see [Publisher object](#publisher-object)) |
-| `trustManifest` | object | Trust and identity metadata (see [Adding Trust](adding-trust.md)) |
+| `trustManifests` | object | Trust metadata keyed by contributor identity URI (see [Adding Trust](adding-trust.md)) |
+| `digest` | string | Digest of the artifact content |
+| `privacyPolicyUrl` | string | URL to the artifact's privacy policy |
+| `termsOfServiceUrl` | string | URL to the artifact's terms of service |
+| `signatures` | object[] | Signatures over selected entry fields |
 | `extensions` | object | Named extensions (see [Extensions](#extensions)) |
 
 ### When to set `displayName`
