@@ -335,8 +335,10 @@ The following members are OPTIONAL:
 `digest`
 : A string containing the artifact content digest in [Digest Format](#digest-format).
   For `url`, hash the exact retrieved artifact bytes. For `data`, hash the
-  UTF-8 JCS-canonicalized [[RFC8785]] JSON value. A digest alone does not
-  authenticate its source; see [Entry Release Coverage](#entry-release-coverage).
+  UTF-8 JCS-canonicalized [[RFC8785]] JSON value. Inline `data` MUST satisfy
+  JCS's input requirements for artifact verification to succeed. A digest
+  alone does not authenticate its source; see
+  [Entry Release Coverage](#entry-release-coverage).
 
 `privacyPolicyUrl`
 : A string containing a URL to the privacy policy governing this artifact.
@@ -585,13 +587,15 @@ SHOULD use their existing identity URI, such as `did:web:assessor.example`.
 Keys MUST be preserved exactly when forwarding a Trust Manifest. Consumers
 MUST NOT infer authentication from a key's spelling or mere presence.
 
-A signature authenticated as that contributor, covering the relevant claims
-and the entry release, authenticates their attribution under the applicable
-verification profile. Another signer MAY endorse those same claims. Consumers
-MUST NOT treat another signer's endorsement as proof that the named
-contributor made those claims. Verification is per signature and per covered
-claim; signing one manifest does not authenticate other manifests or
-unselected fields.
+To authenticate attribution to a contributor, a signature MUST cover the
+relevant claims and the entry release, and its authenticated `signer` value
+MUST exactly equal that contributor's `trustManifests` key. Consumers MUST
+compare these JSON strings case-sensitively, without URI normalization.
+
+Another signer MAY endorse those same claims. Consumers MUST NOT treat another
+signer's endorsement as proof that the named contributor made those claims.
+Verification is per signature and per covered claim; signing one manifest
+does not authenticate other manifests or unselected fields.
 
 ## Independent Contributions and Updates
 
