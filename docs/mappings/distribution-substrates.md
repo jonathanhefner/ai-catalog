@@ -40,7 +40,7 @@ a pack/unpack round-trip.
 | Entry identity (`identifier`) | A stable, addressable identity for each entry |
 | Artifact content + `type` | The artifact bytes are retrievable together with their media type |
 | Catalog structure / nesting | Nested catalogs remain navigable as a hierarchy |
-| Trust Manifest association | An entry's Trust Manifests and their contributor identity keys are discoverable from that entry |
+| Trust Manifest association | An entry's Trust Manifests and their contributor identities are discoverable from that entry |
 | Content integrity | The served bytes are verifiably bound to `entry.digest` |
 | Signing | The Trust Manifests' authenticity is cryptographically verifiable |
 
@@ -64,7 +64,7 @@ a guarantee the substrate cannot express.
 | Nesting | Nested Image Index | Nested Group / `xref` | Nested entry |
 | Manifest association | Referrers API (`subject`) | `xref` / extension attribute | Inline `trustManifests` |
 | Content integrity | Content-addressed digest | *(none — carried)* | `entry.digest` |
-| Signing | Cosign / Notation referrer | *(none — carried)* | Entry `signatures` |
+| Signing | Cosign / Notation referrer | *(none — carried)* | Trust Manifest `signature` |
 
 The [OCI Distribution](oci-distribution.md) and [xRegistry](xregistry.md)
 mappings are concrete bindings of this contract. The OCI binding delegates

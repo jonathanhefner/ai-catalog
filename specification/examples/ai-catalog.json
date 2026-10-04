@@ -18,8 +18,9 @@
         "displayName": "Acme Services Inc."
       },
       "digest": "sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
-      "trustManifests": {
-        "did:web:acme-corp.com": {
+      "trustManifests": [
+        {
+          "contributor": "did:web:acme-corp.com",
           "attestations": [
             {
               "type": "SOC2-Type2",
@@ -27,21 +28,18 @@
               "digest": "sha256:a1b2c3d4e5f67890abcdef1234567890abcdef1234567890abcdef1234567890",
               "size": 245760
             }
-          ]
-        }
-      },
-      "signatures": [
-        {
-          "signer": "did:web:acme-corp.com",
-          "profile": "did-web-v1",
-          "paths": [
-            ["identifier"],
-            ["type"],
-            ["digest"],
-            ["trustManifests", "did:web:acme-corp.com"]
           ],
-          "issuedAt": "2026-02-22T16:30:00Z",
-          "jws": "eyJhbGciOiJFUzI1NiIsImtpZCI6ImRpZDp3ZWI6YWNtZS1jb3JwLmNvbSNyZWxlYXNlLXNpZ25pbmcta2V5In0..detached-jws-signature"
+          "subject": {
+            "identifier": "urn:air:acme-corp.com:agent:finance",
+            "type": "application/a2a-agent-card+json",
+            "digest": "sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+          },
+          "signature": {
+            "signer": "did:web:acme-corp.com",
+            "profile": "did-web-v1",
+            "issuedAt": "2026-02-22T16:30:00Z",
+            "jws": "eyJhbGciOiJFUzI1NiIsImtpZCI6ImRpZDp3ZWI6YWNtZS1jb3JwLmNvbSNyZWxlYXNlLXNpZ25pbmcta2V5IiwidHlwIjoiYWktY2F0YWxvZy10cnVzdC1tYW5pZmVzdCtqd3MifQ..detached-jws-signature"
+          }
         }
       ]
     },

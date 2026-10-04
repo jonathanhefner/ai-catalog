@@ -35,8 +35,9 @@ An agent that supports both MCP and A2A protocols can be represented as a single
           }
         ]
       },
-      "trustManifests": {
-        "did:web:acme-corp.com": {
+      "trustManifests": [
+        {
+          "contributor": "did:web:acme-corp.com",
           "attestations": [
             {
               "type": "SOC2-Type2",
@@ -45,7 +46,7 @@ An agent that supports both MCP and A2A protocols can be represented as a single
             }
           ]
         }
-      }
+      ]
     }
   ]
 }
