@@ -46,7 +46,7 @@ AI Catalog (cross-artifact)
 | transport / capabilities / tools / resources / auth | Inside the Server Card — not surfaced in the catalog |
 | `repository` | Stays in the Server Card (which carries its own `repository`); omitted from the entry to avoid duplicating a value that can drift — catalog-level source/provenance links surface through the Trust Manifest when needed |
 | *(not in the Server Card)* | Entry `publisher` |
-| *(not in the Server Card)* | Entry `trustManifests` (attestations and provenance keyed by contributor identity) |
+| *(not in the Server Card)* | Entry `trustManifests` (attestations and provenance attributed to contributors) |
 | *(not in the Server Card)* | Entry `tags` for cross-artifact discovery |
 
 ## MCP Server as Catalog Entry
@@ -65,8 +65,9 @@ server's Server Card and whose `type` is the known type
     "identifier": "did:web:acme-corp.com",
     "displayName": "Acme Financial Corp"
   },
-  "trustManifests": {
-    "did:web:acme-corp.com": {
+  "trustManifests": [
+    {
+      "contributor": "did:web:acme-corp.com",
       "attestations": [
         {
           "type": "publisher-identity",
@@ -79,7 +80,7 @@ server's Server Card and whose `type` is the known type
         }
       ]
     }
-  }
+  ]
 }
 ```
 
@@ -179,8 +180,8 @@ or trust layer. AI Catalog fills this gap:
    identity proofs) via the Trust Manifest.
 3. **Provenance**: Links to source repositories, registries, and
    build artifacts with cryptographic digests.
-4. **Signing**: Entry signature covering the contributor's Trust Manifest
-   and artifact-binding fields for integrity verification.
+4. **Signing**: Trust Manifest signature covering the contributor's claims
+   and artifact-binding subject for integrity verification.
 5. **Cross-ecosystem discovery**: MCP servers become discoverable
    alongside A2A agents, plugins, and datasets through a single
    catalog format.

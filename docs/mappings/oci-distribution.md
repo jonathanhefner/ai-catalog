@@ -11,9 +11,9 @@ bridges the logical format and the OCI representation.
 Of the binding invariants, the OCI binding **delegates** identity,
 content integrity, and signing to OCI's own primitives. Consequently
 `entry.digest` is expected to equal the OCI descriptor digest of the served
-artifact, and the entry signatures MAY be omitted from the packed
+artifact, and the Trust Manifest signatures MAY be omitted from the packed
 representation because Cosign/Notation referrers carry signing instead.
-Unpacking reconstitutes (or re-signs) the logical entry from those referrers.
+Unpacking reconstitutes (or re-signs) the logical Trust Manifests from those referrers.
 
 ## Conceptual Mapping
 
@@ -29,7 +29,7 @@ concepts to their OCI physical equivalents:
 | Entry artifact content | Manifest `layers[0]` blob (the protocol-specific document) |
 | Entry metadata (name, tags, publisher) | Manifest `config` blob and/or `annotations` |
 | Nested Catalog Entry | Nested OCI Image Index referenced from the parent index |
-| Contributor Trust Manifest | OCI Referrer artifact with `subject` pointing to the entry manifest; preserve the contributor identity key |
+| Contributor Trust Manifest | OCI Referrer artifact with `subject` pointing to the entry manifest; preserve the contributor identity |
 | Trust Manifest attestations | Individual OCI Referrer artifacts per attestation |
 | Signing | Cosign / Notation signatures as OCI Referrers |
 
@@ -47,7 +47,7 @@ Tooling converts an AI Catalog JSON document into OCI artifacts:
 
 3. **Trust Manifests** become OCI Referrer artifacts attached to their
    entry manifests via the OCI `subject` field, preserving their contributor
-   identity keys. Attestation documents (JWTs, PDFs, SLSA provenance) become
+   identities. Attestation documents (JWTs, PDFs, SLSA provenance) become
    individual referrer layers.
 
 4. **Nested catalog entries** become nested OCI Image Indexes.
@@ -78,7 +78,8 @@ Tooling converts OCI artifacts back to an AI Catalog JSON document:
 3. Query the Referrers API for each manifest to discover Trust
    Manifests and attestations.
 4. Assemble the logical AI Catalog JSON with `entries[]` and
-   `trustManifests`, `digest`, and `signatures` fields.
+   `trustManifests` and `digest` fields, including signatures within the
+   Trust Manifests.
 
 The result is a standard `application/ai-catalog+json` document
 indistinguishable from one authored by hand.
