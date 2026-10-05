@@ -352,12 +352,6 @@ The following members are OPTIONAL:
   authenticate its source; see
   [Entry Release Coverage](#entry-release-coverage).
 
-`privacyPolicyUrl`
-: A string containing a URL to the privacy policy governing this artifact.
-
-`termsOfServiceUrl`
-: A string containing a URL to the terms of service governing this artifact.
-
 `trustManifests`
 : An array of [Trust Manifest](#trust-manifest) objects. Each manifest groups
   one contributor's claims about this artifact and can carry its own signature.
@@ -1314,13 +1308,18 @@ the retrieved catalog was signed by that identity.
 
 ### Publisher and Policy Metadata
 
-A Trust Manifest signature does not authenticate the entry's `publisher`,
-`privacyPolicyUrl`, or `termsOfServiceUrl`. These fields are outside its
-payload. Consumers MUST distinguish publisher-authenticated metadata from metadata supplied or endorsed by
-another entity. Policy URLs describe the policy governing the artifact;
-an operator's own catalog policy is not a substitute for that policy.
-This specification does not define a verification profile for a
-`publisher-identity` attestation.
+A Trust Manifest signature does not authenticate the entry's `publisher`
+object, which is outside its payload. Consumers MUST distinguish publisher
+authority established by the Publisher Profile from display metadata supplied
+or endorsed by another entity. This specification does not define a
+verification profile for a `publisher-identity` attestation.
+
+Policy URLs are carried in the [Policy URLs extension](#policy-urls-extension).
+Their authentication is optional through the ordinary extension-digest
+mechanism. An accepted publisher endorsement of the artifact does not imply
+that it authenticates the policy extension. A matching extension binding
+attributes its values to that manifest's contributor; it does not authenticate
+the contents of documents served at those URLs.
 
 ### Verifying Artifact Integrity
 
@@ -1514,9 +1513,49 @@ defines a set of "Official" known types for commonly requested schemas:
 
 1. **Metadata** (`https://ai-catalog.org/extensions/metadata`)
    - Used to store generic, schemaless key-value pairs.
+2. **Policy URLs** (`https://ai-catalog.org/extensions/policy-urls`)
+   - Links to the policies governing an artifact, defined below.
 
 As custom extensions become highly popular, the AI-Catalog TSC may promote
 them to Official Known Types or core standard fields in future specification versions.
+
+### Policy URLs Extension
+
+The official extension key `https://ai-catalog.org/extensions/policy-urls`
+identifies links to policies governing the entry's artifact. It is used in
+`entry.extensions`. Its value MUST be a JSON object. The following members
+are OPTIONAL:
+
+`privacyPolicyUrl`
+: A string containing a URL to the privacy policy governing this artifact.
+
+`termsOfServiceUrl`
+: A string containing a URL to the terms of service governing this artifact.
+
+A publisher or catalog operator MAY populate this extension. An operator's
+own catalog policy is not a substitute for the artifact's governing policy.
+The extension's presence does not establish who authenticated its values.
+
+A contributor MAY authenticate the complete extension value through
+`subject.extensionDigests`, as specified in
+[Extension Digest Verification](#extension-digest-verification). No profile
+defined by this specification requires this coverage. Signing authenticates
+the URL strings, not the contents of policy documents that can change at
+those URLs. Consumers fetching those documents MUST follow
+[Safe Fetching](#safe-fetching).
+
+For example, this entry excerpt supplies both links:
+
+```json
+{
+  "extensions": {
+    "https://ai-catalog.org/extensions/policy-urls": {
+      "privacyPolicyUrl": "https://example.com/privacy",
+      "termsOfServiceUrl": "https://example.com/terms"
+    }
+  }
+}
+```
 
 # Version Handling
 
@@ -1880,8 +1919,6 @@ classDiagram
         publisher Publisher
         trustManifests TrustManifest[]
         digest string
-        privacyPolicyUrl string
-        termsOfServiceUrl string
     }
     class Publisher {
         identifier string
@@ -2061,8 +2098,6 @@ CatalogEntry = {
   ? tags: [* text],
   ? publisher: Publisher,
   ? digest: text,
-  ? privacyPolicyUrl: text,
-  ? termsOfServiceUrl: text,
   ? trustManifests: [* TrustManifest],
   ? updatedAt: tdate,
   ? extensions: { * text => any }
@@ -2130,6 +2165,18 @@ ProvenanceLink = {
 }
 ```
 
+## Official Extension Values
+
+The value under the `https://ai-catalog.org/extensions/policy-urls` key in
+`entry.extensions` has the following structure:
+
+```
+PolicyUrls = {
+  ? privacyPolicyUrl: text,
+  ? termsOfServiceUrl: text
+}
+```
+
 # Example: Multi-Artifact Catalog with Nested Catalog
 
 The following example shows an AI Catalog that contains a mix of
@@ -2157,8 +2204,12 @@ Digest and JWS strings in illustrative examples are placeholders.
         "displayName": "Acme Financial Corp"
       },
       "updatedAt": "2026-03-15T10:00:00Z",
-      "privacyPolicyUrl": "https://acme.com/legal/privacy",
-      "termsOfServiceUrl": "https://acme.com/legal/terms",
+      "extensions": {
+        "https://ai-catalog.org/extensions/policy-urls": {
+          "privacyPolicyUrl": "https://acme.com/legal/privacy",
+          "termsOfServiceUrl": "https://acme.com/legal/terms"
+        }
+      },
       "trustManifests": [
         {
           "contributor": "did:web:acme.com",
