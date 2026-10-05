@@ -205,7 +205,7 @@ To attribute the snapshot to its declared operator, the `did:web` Catalog Profil
 
 ## Complete example
 
-An entry with a contributor manifest, artifact digest, policy links, and a signature. The digest and JWS values are illustrative placeholders:
+An entry with a contributor manifest that endorses the artifact and authenticates its policy-link values through `subject.extensionDigests`. The artifact digest and JWS values are illustrative placeholders:
 
 ```json
 {
@@ -217,15 +217,22 @@ An entry with a contributor manifest, artifact digest, policy links, and a signa
     "displayName": "Acme Financial Corp"
   },
   "digest": "sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
-  "privacyPolicyUrl": "https://acme-corp.com/legal/privacy",
-  "termsOfServiceUrl": "https://acme-corp.com/legal/terms",
+  "extensions": {
+    "https://ai-catalog.org/extensions/policy-urls": {
+      "privacyPolicyUrl": "https://acme-corp.com/legal/privacy",
+      "termsOfServiceUrl": "https://acme-corp.com/legal/terms"
+    }
+  },
   "trustManifests": [
     {
       "contributor": "did:web:acme-corp.com",
       "subject": {
         "identifier": "urn:air:acme-corp.com:a2a:finance",
         "type": "application/a2a-agent-card+json",
-        "digest": "sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+        "digest": "sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+        "extensionDigests": {
+          "https://ai-catalog.org/extensions/policy-urls": "sha256:d2d43cb6efb27c583476d8bd09f485a210c5fa373a5e5708d793e34331cec555"
+        }
       },
       "trustSchema": {
         "identifier": "urn:trust:acme-enterprise-v1",
