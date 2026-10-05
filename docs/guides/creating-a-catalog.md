@@ -231,7 +231,7 @@ The `publisher` field on an entry identifies who publishes that artifact:
 
 ## Extensions
 
-Both the top-level catalog object and individual entries support an `extensions` map for custom properties. Each key identifies an extension and must be a URL or a reverse-DNS name. Consumers that do not recognize an extension key must ignore it without error.
+Both the top-level catalog object and individual entries support an `extensions` map for custom properties. Each key identifies an extension and must be a URL or a reverse-DNS name. Consumers that do not recognize an extension key ignore its semantics without error. They retain its value for signature payloads and can still check a digest binding without understanding its contents.
 
 For generic key/value properties, use the official `https://ai-catalog.org/extensions/metadata` extension:
 
