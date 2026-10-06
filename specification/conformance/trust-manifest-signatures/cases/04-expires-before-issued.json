@@ -1,0 +1,175 @@
+{
+  "id": "04-expires-before-issued",
+  "title": "expiresAt earlier than issuedAt is structurally invalid even with a valid JWS",
+  "spec": [
+    "Signature Object"
+  ],
+  "verifyAt": "2026-10-06T12:00:00Z",
+  "didDocuments": {
+    "did:web:publisher.example": {
+      "@context": [
+        "https://www.w3.org/ns/did/v1",
+        "https://w3id.org/security/suites/jws-2020/v1"
+      ],
+      "id": "did:web:publisher.example",
+      "verificationMethod": [
+        {
+          "id": "did:web:publisher.example#release-key",
+          "type": "JsonWebKey2020",
+          "controller": "did:web:publisher.example",
+          "publicKeyJwk": {
+            "kty": "EC",
+            "crv": "P-256",
+            "x": "q8kKSY-aRUtNKnKFqhnsVt2i4DtIKc5pNdQrPhnBW00",
+            "y": "15F0eddIJShYEnudvW3vOb7SDowzRHwAzQsVVgnXjnM",
+            "use": "sig",
+            "alg": "ES256"
+          }
+        },
+        {
+          "id": "did:web:publisher.example#auth-key",
+          "type": "JsonWebKey2020",
+          "controller": "did:web:publisher.example",
+          "publicKeyJwk": {
+            "kty": "EC",
+            "crv": "P-256",
+            "x": "szY6nM0y2b6xvErbe-npPO_5xWtEcNtIwOc9z9Q0Q24",
+            "y": "kx12FROHDlhU2Ui_i77Jr7JRFnNpT4WPWI3RAZFCwiQ",
+            "use": "sig",
+            "alg": "ES256"
+          }
+        }
+      ],
+      "assertionMethod": [
+        "did:web:publisher.example#release-key"
+      ],
+      "authentication": [
+        "did:web:publisher.example#auth-key"
+      ]
+    },
+    "did:web:assessor.example": {
+      "@context": [
+        "https://www.w3.org/ns/did/v1",
+        "https://w3id.org/security/suites/jws-2020/v1"
+      ],
+      "id": "did:web:assessor.example",
+      "verificationMethod": [
+        {
+          "id": "did:web:assessor.example#assessment-key",
+          "type": "JsonWebKey2020",
+          "controller": "did:web:assessor.example",
+          "publicKeyJwk": {
+            "kty": "EC",
+            "crv": "P-256",
+            "x": "EOuxDzwF50t3-j_mB1LKPY28JiMOKViBe0QmiMe08fk",
+            "y": "aZo2GEltVGKxMq5htrIxNY8BfKrXyx2pHkkPCaJ2mb0",
+            "use": "sig",
+            "alg": "ES256"
+          }
+        }
+      ],
+      "assertionMethod": [
+        "did:web:assessor.example#assessment-key"
+      ]
+    },
+    "did:web:other.example": {
+      "@context": [
+        "https://www.w3.org/ns/did/v1",
+        "https://w3id.org/security/suites/jws-2020/v1"
+      ],
+      "id": "did:web:other.example",
+      "verificationMethod": [
+        {
+          "id": "did:web:other.example#key-1",
+          "type": "JsonWebKey2020",
+          "controller": "did:web:other.example",
+          "publicKeyJwk": {
+            "kty": "EC",
+            "crv": "P-256",
+            "x": "1buLYYOS_QYh15AMP7uSa49TCNqQrHgU-Ekqkwcr5lM",
+            "y": "4iWUW1Vbt3KWDWqDN9dP9XrzLab_avOtU_ZK70G7lvk",
+            "use": "sig",
+            "alg": "ES256"
+          }
+        }
+      ],
+      "assertionMethod": [
+        "did:web:other.example#key-1"
+      ]
+    }
+  },
+  "catalog": {
+    "specVersion": "1.0",
+    "host": {
+      "displayName": "Fixture Registry",
+      "identifier": "did:web:registry.example"
+    },
+    "entries": [
+      {
+        "identifier": "urn:air:publisher.example:mcp:demo",
+        "type": "application/mcp-server-card+json",
+        "data": {
+          "name": "publisher.example/demo",
+          "version": "1.2.0",
+          "title": "Demo MCP Server",
+          "description": "Fixture server card. Numbers are integers only so that the JCS subset applies.",
+          "remotes": [
+            {
+              "type": "streamable-http",
+              "url": "https://mcp.publisher.example/demo"
+            }
+          ],
+          "_meta": {
+            "publisher.example/tool-count": 2
+          }
+        },
+        "digest": "sha256:fe95c0dbca90c3f010b545362a96a5014a11aec3ce86a5be0f123bf9a0e15153",
+        "updatedAt": "2026-10-01T00:00:00Z",
+        "publisher": {
+          "identifier": "did:web:publisher.example",
+          "displayName": "Publisher Example"
+        },
+        "extensions": {
+          "https://ai-catalog.org/extensions/policy-urls": {
+            "privacyPolicyUrl": "https://publisher.example/legal/privacy",
+            "termsOfServiceUrl": "https://publisher.example/legal/terms"
+          }
+        },
+        "trustManifests": [
+          {
+            "contributor": "did:web:publisher.example",
+            "subject": {
+              "identifier": "urn:air:publisher.example:mcp:demo",
+              "type": "application/mcp-server-card+json",
+              "digest": "sha256:fe95c0dbca90c3f010b545362a96a5014a11aec3ce86a5be0f123bf9a0e15153"
+            },
+            "provenance": [
+              {
+                "relation": "publishedFrom",
+                "sourceId": "https://github.com/publisher-example/demo"
+              }
+            ],
+            "signature": {
+              "signer": "did:web:publisher.example",
+              "profile": "did-web-v1",
+              "issuedAt": "2026-10-01T00:00:00Z",
+              "expiresAt": "2026-09-01T00:00:00Z",
+              "jws": "eyJhbGciOiJFUzI1NiIsImtpZCI6ImRpZDp3ZWI6cHVibGlzaGVyLmV4YW1wbGUjcmVsZWFzZS1rZXkiLCJ0eXAiOiJhaS1jYXRhbG9nLXRydXN0LW1hbmlmZXN0K2p3cyJ9..wE4WRzIsttkr0OWa1OPtEDJeX7GS-pGdI34k-k31lQpXc28p_qOAfo0PzP0adK78lRlQfRE7JkUO7OWlHyajuQ"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "expect": [
+    {
+      "entry": 0,
+      "manifest": 0,
+      "accepted": false,
+      "code": "expiresAt-not-after-issuedAt",
+      "premise": {
+        "jwsVerifiesWith": "did:web:publisher.example#release-key"
+      }
+    }
+  ]
+}

@@ -1,0 +1,154 @@
+{
+  "id": "05-digest-and-url-swapped",
+  "title": "Operator swaps entry url and digest and rewrites the signed subject to match",
+  "spec": [
+    "Signed Payload and JWS Construction",
+    "Entry Release Coverage"
+  ],
+  "verifyAt": "2026-10-06T12:00:00Z",
+  "didDocuments": {
+    "did:web:publisher.example": {
+      "@context": [
+        "https://www.w3.org/ns/did/v1",
+        "https://w3id.org/security/suites/jws-2020/v1"
+      ],
+      "id": "did:web:publisher.example",
+      "verificationMethod": [
+        {
+          "id": "did:web:publisher.example#release-key",
+          "type": "JsonWebKey2020",
+          "controller": "did:web:publisher.example",
+          "publicKeyJwk": {
+            "kty": "EC",
+            "crv": "P-256",
+            "x": "q8kKSY-aRUtNKnKFqhnsVt2i4DtIKc5pNdQrPhnBW00",
+            "y": "15F0eddIJShYEnudvW3vOb7SDowzRHwAzQsVVgnXjnM",
+            "use": "sig",
+            "alg": "ES256"
+          }
+        },
+        {
+          "id": "did:web:publisher.example#auth-key",
+          "type": "JsonWebKey2020",
+          "controller": "did:web:publisher.example",
+          "publicKeyJwk": {
+            "kty": "EC",
+            "crv": "P-256",
+            "x": "szY6nM0y2b6xvErbe-npPO_5xWtEcNtIwOc9z9Q0Q24",
+            "y": "kx12FROHDlhU2Ui_i77Jr7JRFnNpT4WPWI3RAZFCwiQ",
+            "use": "sig",
+            "alg": "ES256"
+          }
+        }
+      ],
+      "assertionMethod": [
+        "did:web:publisher.example#release-key"
+      ],
+      "authentication": [
+        "did:web:publisher.example#auth-key"
+      ]
+    },
+    "did:web:assessor.example": {
+      "@context": [
+        "https://www.w3.org/ns/did/v1",
+        "https://w3id.org/security/suites/jws-2020/v1"
+      ],
+      "id": "did:web:assessor.example",
+      "verificationMethod": [
+        {
+          "id": "did:web:assessor.example#assessment-key",
+          "type": "JsonWebKey2020",
+          "controller": "did:web:assessor.example",
+          "publicKeyJwk": {
+            "kty": "EC",
+            "crv": "P-256",
+            "x": "EOuxDzwF50t3-j_mB1LKPY28JiMOKViBe0QmiMe08fk",
+            "y": "aZo2GEltVGKxMq5htrIxNY8BfKrXyx2pHkkPCaJ2mb0",
+            "use": "sig",
+            "alg": "ES256"
+          }
+        }
+      ],
+      "assertionMethod": [
+        "did:web:assessor.example#assessment-key"
+      ]
+    },
+    "did:web:other.example": {
+      "@context": [
+        "https://www.w3.org/ns/did/v1",
+        "https://w3id.org/security/suites/jws-2020/v1"
+      ],
+      "id": "did:web:other.example",
+      "verificationMethod": [
+        {
+          "id": "did:web:other.example#key-1",
+          "type": "JsonWebKey2020",
+          "controller": "did:web:other.example",
+          "publicKeyJwk": {
+            "kty": "EC",
+            "crv": "P-256",
+            "x": "1buLYYOS_QYh15AMP7uSa49TCNqQrHgU-Ekqkwcr5lM",
+            "y": "4iWUW1Vbt3KWDWqDN9dP9XrzLab_avOtU_ZK70G7lvk",
+            "use": "sig",
+            "alg": "ES256"
+          }
+        }
+      ],
+      "assertionMethod": [
+        "did:web:other.example#key-1"
+      ]
+    }
+  },
+  "catalog": {
+    "specVersion": "1.0",
+    "host": {
+      "displayName": "Fixture Registry",
+      "identifier": "did:web:registry.example"
+    },
+    "entries": [
+      {
+        "identifier": "urn:air:publisher.example:agent:finance",
+        "type": "application/a2a-agent-card+json",
+        "url": "https://mirror.other.example/finance.json",
+        "updatedAt": "2026-10-01T00:00:00Z",
+        "trustManifests": [
+          {
+            "contributor": "did:web:publisher.example",
+            "subject": {
+              "identifier": "urn:air:publisher.example:agent:finance",
+              "type": "application/a2a-agent-card+json",
+              "digest": "sha256:50db0a0f4d444b51be20cfb98f7fa8eaf8e0beb35f7a914301f1a4d9d35896dc",
+              "url": "https://mirror.other.example/finance.json"
+            },
+            "provenance": [
+              {
+                "relation": "publishedFrom",
+                "sourceId": "https://github.com/publisher-example/demo"
+              }
+            ],
+            "signature": {
+              "signer": "did:web:publisher.example",
+              "profile": "did-web-v1",
+              "issuedAt": "2026-10-01T00:00:00Z",
+              "expiresAt": "2026-12-31T00:00:00Z",
+              "jws": "eyJhbGciOiJFUzI1NiIsImtpZCI6ImRpZDp3ZWI6cHVibGlzaGVyLmV4YW1wbGUjcmVsZWFzZS1rZXkiLCJ0eXAiOiJhaS1jYXRhbG9nLXRydXN0LW1hbmlmZXN0K2p3cyJ9..OIiUsPJGzhMc2Dki2wAlHZh3wRHAIbAE6I6JV5PshxoBIaxrXuuSeIeAL1Q6zgquS5-_w3RlZXTSUsCM15ST8w"
+            }
+          }
+        ],
+        "digest": "sha256:50db0a0f4d444b51be20cfb98f7fa8eaf8e0beb35f7a914301f1a4d9d35896dc"
+      }
+    ]
+  },
+  "expect": [
+    {
+      "entry": 0,
+      "manifest": 0,
+      "accepted": false,
+      "code": "signature-invalid"
+    }
+  ],
+  "note": "Subject and entry agree and the attacker's bytes match the new digest, but the subject is inside the signed payload, so the JWS no longer verifies.",
+  "resources": {
+    "https://mirror.other.example/finance.json": "{\"name\":\"Finance Agent\",\"url\":\"https://agents.other.example/finance\",\"version\":\"2.0.1\"}"
+  }
+}
