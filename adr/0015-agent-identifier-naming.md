@@ -13,6 +13,9 @@ narrows the interoperable v1 signature profile to a root `did:web` issuer and
 assigns runtime or workload identity to separate profiles. The logical-name and
 cryptographic-issuer separation established here remains unchanged.
 
+**Proposed revision:** [ADR-0036](0036-urn-air-slash-names.md) proposes slash-separated
+namespaces within the publisher-relative name and an optional `:kind` suffix.
+
 ## Context
 The `ai-catalog` specification originally recommended using URNs or URIs for the `identifier` field in catalog entries, but did not mandate a specific format. This led to inconsistency in examples and potential interoperability issues across different registries and orchestrators.
 

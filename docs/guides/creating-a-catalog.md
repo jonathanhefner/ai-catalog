@@ -61,14 +61,14 @@ Every entry must have these three things:
 
 ```json
 {
-  "identifier": "urn:air:acme-corp.com:mcp:weather",
+  "identifier": "urn:air:acme-corp.com:weather:mcp",
   "type": "application/mcp-server-card+json",
   "url": "https://api.acme-corp.com/mcp/server-card"
 }
 ```
 
 `identifier`
-:   A stable, globally unique string that identifies this artifact. The `urn:air:{domain}:{namespace}:{name}` format is highly recommended for open or federated systems. The identifier should remain stable across versions and catalog locations.
+:   A stable, globally unique string that identifies this artifact. The `urn:air:{publisher}:{name}[:{kind}]` format is highly recommended for open or federated systems. The identifier should remain stable across versions and catalog locations.
 
 `type`
 :   The media type of the artifact. This is how clients determine what kind of artifact this is without fetching it.
@@ -126,7 +126,7 @@ A fully populated entry for an artifact that benefits from `displayName`:
 
 ```json
 {
-  "identifier": "urn:air:acme-corp.com:data:market-2026q1",
+  "identifier": "urn:air:acme-corp.com:datasets/market-2026q1",
   "displayName": "Market Dataset Q1 2026",
   "type": "application/parquet",
   "url": "https://data.acme-corp.com/market-2026q1.parquet",
@@ -163,19 +163,21 @@ Each entry must provide its artifact content via exactly one of these fields:
 
 ## Identifier best practices
 
-The spec highly recommends the `urn:air:{domain}:{namespace}:{name}` format for open and federated systems:
+The spec highly recommends the `urn:air:{publisher}:{name}[:{kind}]` format for open and federated systems:
 
 ```
-urn:air:acme-corp.com:mcp:weather        # MCP server
-urn:air:acme-corp.com:a2a:finance        # A2A agent
-urn:air:acme-corp.com:skill:code-review  # skill bundle
-urn:air:acme-corp.com:catalog:finance    # nested catalog
-finance-agent                            # Avoid: not globally unique
+urn:air:acme-corp.com:weather:mcp        # MCP server
+urn:air:acme-corp.com:finance:a2a        # A2A agent
+urn:air:acme-corp.com:code-review:skill  # skill bundle
+urn:air:acme-corp.com:catalogs/finance   # nested catalog
+finance-agent                         # Avoid: not globally unique
 ```
 
-- `{domain}` — the domain name of the publishing organization
-- `{namespace}` — logical category, can be colon-separated (`finance:agent`)
-- `{name}` — stable, unique name within the publisher's namespace
+- `{publisher}` — the domain name of the publishing organization
+- `{name}` — a name under the publisher's authority, optionally including slash-separated namespaces such as `finance/payments/weather`
+- `{kind}` — an optional conceptual kind; the square brackets mean the entire `:{kind}` suffix can be omitted
+
+For example, `urn:air:acme-corp.com:finance/payments/weather:mcp` has publisher `acme-corp.com`, name `finance/payments/weather`, and kind `mcp`. A name without namespaces or kind, such as `urn:air:acme-corp.com:weather`, is also valid. Literal colons separate these components; they cannot occur inside the name or kind. Kind values are not standardized and do not replace the entry's `type`.
 
 Keep identifiers stable across catalog locations and versions. Anchoring to a domain you own prevents typosquatting.
 
@@ -188,14 +190,14 @@ A catalog may contain multiple entries with the same `identifier` but different 
   "specVersion": "1.0",
   "entries": [
     {
-      "identifier": "urn:air:acme-corp.com:a2a:finance",
+      "identifier": "urn:air:acme-corp.com:finance:a2a",
       "version": "2.1.0",
       "type": "application/a2a-agent-card+json",
       "url": "https://agents.acme-corp.com/finance/v2.1.json",
       "updatedAt": "2026-03-15T10:00:00Z"
     },
     {
-      "identifier": "urn:air:acme-corp.com:a2a:finance",
+      "identifier": "urn:air:acme-corp.com:finance:a2a",
       "version": "2.0.0",
       "type": "application/a2a-agent-card+json",
       "url": "https://agents.acme-corp.com/finance/v2.0.json",
@@ -268,7 +270,7 @@ Both fields are optional. The publisher or catalog operator can supply these lin
   },
   "entries": [
     {
-      "identifier": "urn:air:acme-corp.com:mcp:weather",
+      "identifier": "urn:air:acme-corp.com:weather:mcp",
       "type": "application/mcp-server-card+json",
       "description": "Real-time weather data and forecasts.",
       "tags": ["weather", "data"],
@@ -281,14 +283,14 @@ Both fields are optional. The publisher or catalog operator can supply these lin
       }
     },
     {
-      "identifier": "urn:air:acme-corp.com:a2a:research",
+      "identifier": "urn:air:acme-corp.com:research:a2a",
       "type": "application/a2a-agent-card+json",
       "description": "Deep-research agent with citation support.",
       "tags": ["research", "analysis"],
       "url": "https://agents.acme-corp.com/research"
     },
     {
-      "identifier": "urn:air:acme-corp.com:data:market-2026q1",
+      "identifier": "urn:air:acme-corp.com:datasets/market-2026q1",
       "displayName": "Market Dataset Q1 2026",
       "type": "application/parquet",
       "description": "OHLCV equity data for Q1 2026.",

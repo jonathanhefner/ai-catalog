@@ -6,6 +6,9 @@ Accepted
 ## Date
 2026-06-18
 
+**Proposed clarification:** [ADR-0036](0036-urn-air-slash-names.md) keeps the
+identifier fallback focused on the name, excluding an optional kind suffix.
+
 ## Context
 A Catalog Entry is a thin pointer: it carries an `identifier`, a `mediaType`, and exactly one of `url` or `data` locating the full artifact. `displayName` (a human-readable name for the artifact) is a REQUIRED member of every Catalog Entry, and is listed among the required-at-minimum members of a Minimal Catalog (Level 1).
 
