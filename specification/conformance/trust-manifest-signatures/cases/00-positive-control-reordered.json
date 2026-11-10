@@ -1,0 +1,267 @@
+{
+  "id": "00-positive-control-reordered",
+  "title": "Reordered members, reordered manifests, a reserved member, and a mirror URL still verify",
+  "spec": [
+    "Signed Payload and JWS Construction",
+    "Independent Contributions and Updates",
+    "Subject Object",
+    "Entry Release Coverage",
+    "Verifying Artifact Integrity"
+  ],
+  "verifyAt": "2026-10-06T12:00:00Z",
+  "didDocuments": {
+    "did:web:publisher.example": {
+      "@context": [
+        "https://www.w3.org/ns/did/v1",
+        "https://w3id.org/security/suites/jws-2020/v1"
+      ],
+      "id": "did:web:publisher.example",
+      "verificationMethod": [
+        {
+          "id": "did:web:publisher.example#release-key",
+          "type": "JsonWebKey2020",
+          "controller": "did:web:publisher.example",
+          "publicKeyJwk": {
+            "kty": "EC",
+            "crv": "P-256",
+            "x": "q8kKSY-aRUtNKnKFqhnsVt2i4DtIKc5pNdQrPhnBW00",
+            "y": "15F0eddIJShYEnudvW3vOb7SDowzRHwAzQsVVgnXjnM",
+            "use": "sig",
+            "alg": "ES256"
+          }
+        },
+        {
+          "id": "did:web:publisher.example#auth-key",
+          "type": "JsonWebKey2020",
+          "controller": "did:web:publisher.example",
+          "publicKeyJwk": {
+            "kty": "EC",
+            "crv": "P-256",
+            "x": "szY6nM0y2b6xvErbe-npPO_5xWtEcNtIwOc9z9Q0Q24",
+            "y": "kx12FROHDlhU2Ui_i77Jr7JRFnNpT4WPWI3RAZFCwiQ",
+            "use": "sig",
+            "alg": "ES256"
+          }
+        }
+      ],
+      "assertionMethod": [
+        "did:web:publisher.example#release-key"
+      ],
+      "authentication": [
+        "did:web:publisher.example#auth-key"
+      ]
+    },
+    "did:web:assessor.example": {
+      "@context": [
+        "https://www.w3.org/ns/did/v1",
+        "https://w3id.org/security/suites/jws-2020/v1"
+      ],
+      "id": "did:web:assessor.example",
+      "verificationMethod": [
+        {
+          "id": "did:web:assessor.example#assessment-key",
+          "type": "JsonWebKey2020",
+          "controller": "did:web:assessor.example",
+          "publicKeyJwk": {
+            "kty": "EC",
+            "crv": "P-256",
+            "x": "EOuxDzwF50t3-j_mB1LKPY28JiMOKViBe0QmiMe08fk",
+            "y": "aZo2GEltVGKxMq5htrIxNY8BfKrXyx2pHkkPCaJ2mb0",
+            "use": "sig",
+            "alg": "ES256"
+          }
+        }
+      ],
+      "assertionMethod": [
+        "did:web:assessor.example#assessment-key"
+      ]
+    },
+    "did:web:other.example": {
+      "@context": [
+        "https://www.w3.org/ns/did/v1",
+        "https://w3id.org/security/suites/jws-2020/v1"
+      ],
+      "id": "did:web:other.example",
+      "verificationMethod": [
+        {
+          "id": "did:web:other.example#key-1",
+          "type": "JsonWebKey2020",
+          "controller": "did:web:other.example",
+          "publicKeyJwk": {
+            "kty": "EC",
+            "crv": "P-256",
+            "x": "1buLYYOS_QYh15AMP7uSa49TCNqQrHgU-Ekqkwcr5lM",
+            "y": "4iWUW1Vbt3KWDWqDN9dP9XrzLab_avOtU_ZK70G7lvk",
+            "use": "sig",
+            "alg": "ES256"
+          }
+        }
+      ],
+      "assertionMethod": [
+        "did:web:other.example#key-1"
+      ]
+    }
+  },
+  "catalog": {
+    "specVersion": "1.0",
+    "host": {
+      "displayName": "Fixture Registry",
+      "identifier": "did:web:registry.example"
+    },
+    "entries": [
+      {
+        "trustManifests": [
+          {
+            "additionalSignatures": [
+              {
+                "note": "reserved; excluded from the payload"
+              }
+            ],
+            "x-fixture-note": "unrecognized member; it stays in the signed payload",
+            "signature": {
+              "jws": "eyJhbGciOiJFUzI1NiIsImtpZCI6ImRpZDp3ZWI6YXNzZXNzb3IuZXhhbXBsZSNhc3Nlc3NtZW50LWtleSIsInR5cCI6ImFpLWNhdGFsb2ctdHJ1c3QtbWFuaWZlc3QrandzIn0..J7zWauzMoHC-OEuSNSWXOgtKa-bf1bEiucnYQ-sHmgQZfHKvn2qiNvW5dtC_aVDgDh_oX01hvgU2-EjP446EdQ",
+              "expiresAt": "2026-12-31T00:00:00Z",
+              "issuedAt": "2026-10-01T00:00:00Z",
+              "profile": "did-web-v1",
+              "signer": "did:web:assessor.example"
+            },
+            "extensions": {
+              "com.assessor.toolManifest": {
+                "toolManifestDigest": "sha256:4f2a5d6e7c8b9a0f1e2d3c4b5a69788796a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1",
+                "profile": "com.assessor.mcp-tool-definition.v1"
+              }
+            },
+            "attestations": [
+              {
+                "size": 4096,
+                "digest": "sha256:0b5e3a7d1c2f4e6a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a",
+                "uri": "https://assessor.example/reports/publisher-example-demo.json",
+                "type": "com.assessor.scan-report"
+              }
+            ],
+            "trustSchema": {
+              "version": "1",
+              "identifier": "https://assessor.example/schema/safety"
+            },
+            "subject": {
+              "digest": "sha256:fe95c0dbca90c3f010b545362a96a5014a11aec3ce86a5be0f123bf9a0e15153",
+              "type": "application/mcp-server-card+json",
+              "identifier": "urn:air:publisher.example:mcp:demo"
+            },
+            "contributor": "did:web:assessor.example"
+          },
+          {
+            "signature": {
+              "jws": "eyJhbGciOiJFUzI1NiIsImtpZCI6ImRpZDp3ZWI6cHVibGlzaGVyLmV4YW1wbGUjcmVsZWFzZS1rZXkiLCJ0eXAiOiJhaS1jYXRhbG9nLXRydXN0LW1hbmlmZXN0K2p3cyJ9..G21PkP8xR2HPcNiSwh6v79C1Ep40Y6pxl3bbTGuZxQU-3CLWpmtckAuCQSl4Byo0wccneIzPy9a5DFjb97hk8Q",
+              "expiresAt": "2026-12-31T00:00:00Z",
+              "issuedAt": "2026-10-01T00:00:00Z",
+              "profile": "did-web-v1",
+              "signer": "did:web:publisher.example"
+            },
+            "provenance": [
+              {
+                "sourceId": "https://github.com/publisher-example/demo",
+                "relation": "publishedFrom"
+              }
+            ],
+            "subject": {
+              "digest": "sha256:fe95c0dbca90c3f010b545362a96a5014a11aec3ce86a5be0f123bf9a0e15153",
+              "type": "application/mcp-server-card+json",
+              "identifier": "urn:air:publisher.example:mcp:demo"
+            },
+            "contributor": "did:web:publisher.example"
+          }
+        ],
+        "extensions": {
+          "https://ai-catalog.org/extensions/policy-urls": {
+            "termsOfServiceUrl": "https://publisher.example/legal/terms",
+            "privacyPolicyUrl": "https://publisher.example/legal/privacy"
+          }
+        },
+        "publisher": {
+          "displayName": "Publisher Example",
+          "identifier": "did:web:publisher.example"
+        },
+        "updatedAt": "2026-10-01T00:00:00Z",
+        "digest": "sha256:fe95c0dbca90c3f010b545362a96a5014a11aec3ce86a5be0f123bf9a0e15153",
+        "data": {
+          "_meta": {
+            "publisher.example/tool-count": 2
+          },
+          "remotes": [
+            {
+              "url": "https://mcp.publisher.example/demo",
+              "type": "streamable-http"
+            }
+          ],
+          "description": "Fixture server card. Numbers are integers only so that the JCS subset applies.",
+          "title": "Demo MCP Server",
+          "version": "1.2.0",
+          "name": "publisher.example/demo"
+        },
+        "type": "application/mcp-server-card+json",
+        "identifier": "urn:air:publisher.example:mcp:demo"
+      },
+      {
+        "digest": "sha256:09858221d1b99ec8266505b33d81edc038978228a5fafe7b835d646f8125fbe0",
+        "trustManifests": [
+          {
+            "signature": {
+              "jws": "eyJhbGciOiJFUzI1NiIsImtpZCI6ImRpZDp3ZWI6cHVibGlzaGVyLmV4YW1wbGUjcmVsZWFzZS1rZXkiLCJ0eXAiOiJhaS1jYXRhbG9nLXRydXN0LW1hbmlmZXN0K2p3cyJ9..Y6Is-pHMpKFW-q5RlRGx6sw9o4Cb9hAkTPGA8FCG3kRJIngRq0aKWwD-6hlmvjnG6GGHQ8iUqUQFkHzHMX9nRw",
+              "expiresAt": "2026-12-31T00:00:00Z",
+              "issuedAt": "2026-10-01T00:00:00Z",
+              "profile": "did-web-v1",
+              "signer": "did:web:publisher.example"
+            },
+            "provenance": [
+              {
+                "sourceId": "https://github.com/publisher-example/demo",
+                "relation": "publishedFrom"
+              }
+            ],
+            "subject": {
+              "digest": "sha256:09858221d1b99ec8266505b33d81edc038978228a5fafe7b835d646f8125fbe0",
+              "type": "application/a2a-agent-card+json",
+              "identifier": "urn:air:publisher.example:agent:finance"
+            },
+            "contributor": "did:web:publisher.example"
+          }
+        ],
+        "updatedAt": "2026-10-01T00:00:00Z",
+        "url": "https://mirror.registry.example/publisher.example/finance.json",
+        "type": "application/a2a-agent-card+json",
+        "identifier": "urn:air:publisher.example:agent:finance"
+      }
+    ]
+  },
+  "expect": [
+    {
+      "entry": 0,
+      "manifest": 0,
+      "accepted": true,
+      "premise": {
+        "jwsVerifiesWith": "did:web:assessor.example#assessment-key"
+      }
+    },
+    {
+      "entry": 0,
+      "manifest": 1,
+      "accepted": true,
+      "premise": {
+        "jwsVerifiesWith": "did:web:publisher.example#release-key"
+      }
+    },
+    {
+      "entry": 1,
+      "manifest": 0,
+      "accepted": true,
+      "premise": {
+        "jwsVerifiesWith": "did:web:publisher.example#release-key"
+      }
+    }
+  ],
+  "note": "Members of every object were written in reverse order after signing and the trustManifests array was reversed. The assessor manifest carries an unrecognized member that remains part of its payload, and an additionalSignatures member added after signing, which is excluded from the payload. The agent entry's url was moved to a mirror serving identical bytes; the subject carries no URL, so the manifest still binds through the digest.",
+  "resources": {
+    "https://mirror.registry.example/publisher.example/finance.json": "{\"name\":\"Finance Agent\",\"url\":\"https://agents.publisher.example/finance\",\"version\":\"2.0.1\"}"
+  }
+}
