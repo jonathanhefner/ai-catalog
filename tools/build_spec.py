@@ -19,7 +19,7 @@ DEFAULT_CONFIG = REPO_ROOT / "specification/respec-config.json"
 
 
 DEFAULT_RESPEC_CONFIG = {
-    "specStatus": "Official",
+    "specStatus": "base",
     "editors": [],
     "latestVersion": None,
     "noRecTrack": True,
@@ -144,9 +144,14 @@ def render_sections(converter: markdown.Markdown, sections: list[Section]) -> st
     for section in sections:
         heading_tag = f"h{section.level}"
         class_attr = ' class="appendix"' if section.appendix else ""
+        section_id = section.section_id
+        if section.level == 1 and section_id == "status-of-this-document":
+            section_id = "sotd"
+            heading_tag = "h2"
+            class_attr = ' class="introductory override"'
 
         parts = [
-            f'<section{class_attr} id="{section.section_id}">',
+            f'<section{class_attr} id="{section_id}">',
             f"<{heading_tag}>{html.escape(section.title)}</{heading_tag}>",
         ]
 
@@ -185,6 +190,8 @@ def build_document(source: Path, output: Path, config_path: Path) -> None:
     body_html = render_sections(converter, sections)
     config_json = json.dumps(respec_config, indent=6, ensure_ascii=False)
 
+    # The empty .copyright element is deliberate: ReSpec uses an author-supplied
+    # .copyright in place of its default W3C copyright notice.
     document = f"""<!DOCTYPE html>
 <html lang=\"en\">
 <head>
@@ -209,14 +216,11 @@ def build_document(source: Path, output: Path, config_path: Path) -> None:
 </head>
 <body>
 
+<p class=\"copyright\"></p>
+
 <section id=\"abstract\">
   <h2>Abstract</h2>
   {abstract_html}
-</section>
-
-<section id=\"sotd\">
-  <h2>Status of This Document</h2>
-  <p>This is a draft document and may be updated at any time.</p>
 </section>
 
 <section id=\"conformance\">

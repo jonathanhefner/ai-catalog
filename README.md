@@ -10,6 +10,14 @@ Contact us via GitHub Discussions, [Issues](https://github.com/Agent-Card/ai-cat
 
 ## Specification Site
 
+The official **AI Catalog v0.9 specification** is a **Release Candidate for
+v1.0**, ready for implementation and interoperability feedback. It is **not
+the final v1.0 specification**; requirements may change as feedback is addressed.
+Implementations use `"specVersion": "0.9"` and should record the specification
+revision or commit separately. Please report implementation experience,
+ambiguities, and interoperability issues through
+[GitHub issues](https://github.com/Agent-Card/ai-catalog/issues).
+
 The AI Catalog specification is built from `specification/ai-catalog.md` and published to GitHub Pages by the workflow in `.github/workflows/publish-spec.yml`.
 
 Published site: [ai-catalog.io](https://ai-catalog.io/)
@@ -71,7 +79,7 @@ Actual properties for inclusion will be debated in PRs.
 
 #### AI Artifact Coverage
 
-AI Catalog entries can reference or inline a wide range of AI artifacts, including MCP servers, A2A agent cards, Claude Code plugins, datasets, model cards, and nested catalogs.
+AI Catalog entries can reference or inline a wide range of AI artifacts, including MCP servers, A2A agent cards, Agent Plugins, datasets, model cards, and nested catalogs.
 
 Protocol-specific metadata remains defined by the underlying artifact specifications. The catalog does not duplicate or constrain those schemas; it uses media types to identify what each entry contains.
 

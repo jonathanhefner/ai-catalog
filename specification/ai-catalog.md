@@ -1,8 +1,38 @@
+# Status of This Document
+
+This is the official **AI Catalog v0.9 specification**, a **Release Candidate
+for v1.0**, published by the AI Catalog project for implementation and
+interoperability feedback.
+It is ready to implement and evaluate, but it is **not the final v1.0
+specification**.
+
+Implementers are encouraged to build producers and consumers against this
+document and report ambiguities, missing requirements, interoperability
+issues, and implementation experience through the project's
+[GitHub issues](https://github.com/Agent-Card/ai-catalog/issues).
+Reports should identify the specification revision or commit implemented,
+the relevant sections, and any examples needed to reproduce an issue.
+Feedback on discovery, catalog projection, version handling, and Trust
+Manifest signing and verification is particularly useful.
+
+Requirements may change in response to implementation feedback before
+final v1.0 publication, including changes that require implementations to
+be updated. Implementations of this release candidate use
+`"specVersion": "0.9"` to identify this version of the specification.
+The final v1.0 specification will use `"specVersion": "1.0"`.
+Implementers should also record the specification revision or commit
+separately to distinguish updates within the v0.9 feedback phase.
+
+Final v1.0 publication is intended to follow evaluation of implementation
+feedback and resolution of issues affecting interoperability. Publication
+of this release candidate does not itself constitute IANA registration of
+the identifiers described in [IANA Considerations](#iana-considerations).
+
 # Introduction
 
 The AI ecosystem comprises a growing number of protocols, artifact
 formats, and service types. Model Context Protocol (MCP) servers,
-Agent-to-Agent (A2A) agents, Claude Code plugins, datasets, model cards,
+Agent-to-Agent (A2A) agents, Agent Plugins, datasets, model cards,
 and other AI artifacts each define their own metadata and discovery
 mechanisms. This fragmentation forces clients and registries to
 implement bespoke logic for each artifact type, increasing complexity
@@ -10,8 +40,8 @@ and reducing interoperability.
 
 This document defines the **AI Catalog**: a typed, nestable JSON
 container for discovering heterogeneous AI artifacts. Each entry
-declares its artifact type via a type identifier (which is an IANA media type) and may reference or
-embed the native artifact metadata. A minimal catalog is simply a
+declares its artifact type via a type identifier (preferably a media type)
+and may reference or embed the native artifact metadata. A minimal catalog is simply a
 list of entries — names, types, and URLs — requiring no additional
 infrastructure.
 
@@ -57,7 +87,7 @@ Trust Manifest
 
 Artifact
 : Any AI resource described by a catalog entry, such as an MCP server
-  manifest, an A2A agent card, a Claude Code plugin, a
+  manifest, an A2A agent card, an Agent Plugin, a
   dataset descriptor, or a nested AI Catalog.
 
 # Design Goals
@@ -105,7 +135,7 @@ members:
 
 `specVersion`
 : A string indicating the version of this specification that the
-  catalog conforms to, in "Major.Minor" format (e.g., "1.0").
+  catalog conforms to, in "Major.Minor" format (e.g., "0.9").
   See [Version Handling](#version-handling) for compatibility rules.
 
 `entries`
@@ -116,26 +146,26 @@ For example, a minimal catalog listing four AI artifacts:
 
 ```json
 {
-  "specVersion": "1.0",
+  "specVersion": "0.9",
   "entries": [
     {
-      "identifier": "urn:air:example.com:skill:code-review",
+      "identifier": "urn:air:example.com:code-review:skill",
       "displayName": "Code Review Assistant",
       "type": "application/agent-skills+zip",
       "url": "https://skills.example.com/code-review/skill.zip"
     },
     {
-      "identifier": "urn:air:example.com:mcp:weather",
+      "identifier": "urn:air:example.com:weather:mcp",
       "type": "application/mcp-server-card+json",
       "url": "https://api.example.com/mcp/server-card"
     },
     {
-      "identifier": "urn:air:example.com:a2a:research",
+      "identifier": "urn:air:example.com:research:a2a",
       "type": "application/a2a-agent-card+json",
       "url": "https://agents.example.com/researchAssistant"
     },
     {
-      "identifier": "urn:air:example.com:agent:productivity-plugin",
+      "identifier": "urn:air:example.com:productivity-plugin:plugin",
       "displayName": "Productivity Plugin",
       "type": "application/agent-plugins+zip",
       "description": "Tools for common productivity workflows.",
@@ -167,6 +197,9 @@ The following members are OPTIONAL:
 : Reserved for future use. Producers SHOULD omit this member. Consumers MUST
   accept and ignore it regardless of its value. It is excluded from this
   catalog's signature payload; it establishes no endorsement in this version.
+
+The AI Catalog top-level object MAY also contain members this specification
+does not define. See [Unrecognized Members](#unrecognized-members).
 
 ## Host Info
 
@@ -200,6 +233,9 @@ For example:
 }
 ```
 
+A Host Info object MAY also contain members this specification does not
+define. See [Unrecognized Members](#unrecognized-members).
+
 ## Catalog Entry
 
 A Catalog Entry object describes a single AI artifact in the catalog.
@@ -209,16 +245,20 @@ It MUST contain the following members:
 : A string uniquely identifying this artifact. This field is an open text format (e.g., any valid URI or URN is accepted). Consumers that do not recognize an identifier scheme MUST treat the value as opaque. Identifier syntax alone does not verify publisher identity or establish trust. For open or federated systems, a globally unique absolute URI is RECOMMENDED. An artifact publisher that wants an entry identifier to be preserved when the artifact appears in other catalogs SHOULD use the AI Catalog-specific `urn:air` naming structure with its own domain in the `{publisher}` segment. A catalog operator incorporating an entry for the first time with a publisher-authorized `urn:air` identifier MUST preserve that identifier exactly.
 
     **`urn:air` Identifier Format:**
-    `urn:air:{publisher}:{namespace}:{name}`
+    `urn:air:{publisher}:{name}[:{kind}]`
 
     - `{publisher}`: The domain name of the organization publishing the artifact (e.g., `example.com`).
-    - `{namespace}`: The logical namespace, which can contain one or more colon-separated categories (e.g., `mcp`, `skill`, `agent`, `finance:agent`).
-    - `{name}`: The stable, unique name of the artifact within the publisher's namespace.
+    - `{name}`: The stable logical name assigned by the publisher. Its internal structure is publisher-defined; for example, a publisher may use `engineering/code-review` or `engineering.code-review`.
+    - `{kind}`: An OPTIONAL single-segment suffix describing the conceptual kind of artifact. Its value is assigned by the publisher; this specification defines no vocabulary of kinds.
+
+    Colons separate the publisher, name, and optional kind; neither `{name}` nor `{kind}` contains a literal colon.
 
     *Examples:*
 
-    - `urn:air:example.com:skill:code-review`
-    - `urn:air:example.com:mcp:weather`
+    - `urn:air:acme.com:code-review`
+    - `urn:air:acme.com:engineering/code-review`
+    - `urn:air:acme.com:engineering/code-review:skill`
+    - `urn:air:acme.com:engineering.code-review:skill`
 
     For closed or local systems where a different identifier format is used, client implementations are responsible for parsing and processing the custom format as appropriate.
 
@@ -361,11 +401,14 @@ SHOULD resolve one in the following order:
 2. **The referenced artifact's own canonical name**, if the consumer has
    already fetched or cached the artifact — for example the `name` field
    of an A2A Agent Card or the `title` field of an MCP Server Card.
-3. **The trailing segment of the entry's `identifier`** as a last
-   resort — the portion after its final `:` or `/` delimiter. For
-   example, `urn:air:example.com:mcp:weather` yields `weather` and
-   `urn:air:anonymous.modelcontextprotocol.io:mcp:brave-search` yields
-   `brave-search`.
+3. **A name derived from the entry's `identifier`** as a last resort.
+   For `urn:air`, use the entire `{name}` verbatim. For example,
+   `urn:air:acme.com:engineering/code-review:skill` yields
+   `engineering/code-review`, and
+   `urn:air:acme.com:engineering.code-review:skill` yields
+   `engineering.code-review`.
+   For other identifier formats, use the portion after the final `:` or
+   `/` delimiter.
 
 A consumer SHOULD NOT dereference an artifact at render time solely to
 obtain a name. A registry, directory, or other service built on top of a
@@ -437,6 +480,9 @@ directory, or other service built on top of a catalog SHOULD resolve the
 version once at ingestion and cache the result, rather than fetching
 artifacts on the rendering path.
 
+A Catalog Entry MAY also contain members this specification does not
+define. See [Unrecognized Members](#unrecognized-members).
+
 ## Multi-Version Entries
 
 A catalog MAY contain multiple entries with the same `identifier` and
@@ -458,17 +504,17 @@ For example, a catalog listing two versions of the same agent:
 
 ```json
 {
-  "specVersion": "1.0",
+  "specVersion": "0.9",
   "entries": [
     {
-      "identifier": "urn:air:acme.com:agent:finance",
+      "identifier": "urn:air:acme.com:finance:agent",
       "version": "2.1.0",
       "type": "application/a2a-agent-card+json",
       "url": "https://api.acme-corp.com/agents/finance/v2.1.json",
       "updatedAt": "2026-03-15T10:00:00Z"
     },
     {
-      "identifier": "urn:air:acme.com:agent:finance",
+      "identifier": "urn:air:acme.com:finance:agent",
       "version": "2.0.0",
       "type": "application/a2a-agent-card+json",
       "url": "https://api.acme-corp.com/agents/finance/v2.0.json",
@@ -564,6 +610,9 @@ The following members are OPTIONAL:
 : A string providing a type hint for the publisher identifier (e.g.,
   "did", "dns").
 
+A Publisher object MAY also contain members this specification does not
+define. See [Unrecognized Members](#unrecognized-members).
+
 # Trust Manifest
 
 A Trust Manifest is an OPTIONAL collection of one contributor's trust metadata
@@ -655,7 +704,7 @@ For example, this unsigned entry carries independent contributions:
 
 ```json
 {
-  "identifier": "urn:air:acme.com:agent:finance",
+  "identifier": "urn:air:acme.com:finance:agent",
   "type": "application/a2a-agent-card+json",
   "url": "https://acme.com/finance.json",
   "trustManifests": [
@@ -948,7 +997,7 @@ For example, a signed release-only manifest has this payload:
 {
   "contributor": "did:web:acme.com",
   "subject": {
-    "identifier": "urn:air:acme.com:agent:finance",
+    "identifier": "urn:air:acme.com:finance:agent",
     "type": "application/a2a-agent-card+json",
     "digest": "sha256:56bbd2ff730d81a52951fc2f58809dfb086b4be7a82766dcc18cfe32ff6acbbd"
   },
@@ -1024,8 +1073,9 @@ Consumers MUST NOT combine fields from different manifests to establish binding.
 The consumer MUST also verify the artifact bytes against the matching digest
 using [Verifying Artifact Integrity](#verifying-artifact-integrity). The
 retrieval URL is not signed by the Trust Manifest, permitting mirrors serving
-identical bytes. Other entry fields, including entry extensions, are outside
-the manifest signature's scope. Referenced evidence retains its own
+identical bytes. Other entry fields, including entry extensions and
+[unrecognized members](#unrecognized-members), are outside the manifest
+signature's scope. Referenced evidence retains its own
 verification requirements.
 
 ### Catalog Snapshot Coverage
@@ -1159,7 +1209,7 @@ with two additional requirements:
   matching the entry and verification of the artifact bytes against
   `entry.digest`.
 
-For `urn:air:example.com:agent:billing`, the publisher signer is therefore
+For `urn:air:example.com:billing:agent`, the publisher signer is therefore
 `did:web:example.com`. A valid signature by an assessor can endorse claims
 about that same release, but does not satisfy publisher authorization.
 Matching the publisher domain proves namespace control, not reputation,
@@ -1184,8 +1234,9 @@ the retrieved catalog was signed or authorized by that identity.
 ### Publisher and Policy Metadata
 
 A Trust Manifest signature does not authenticate the entry's `publisher`
-object or its entry extensions, including the
-[Policy URLs extension](#policy-urls-extension). These fields are outside
+object, its entry extensions, including the
+[Policy URLs extension](#policy-urls-extension), or its
+[unrecognized members](#unrecognized-members). These fields are outside
 its payload. Consumers MUST distinguish publisher-authenticated metadata
 from metadata supplied or endorsed by another entity. A catalog signature
 covers them as part of its signer's snapshot, subject to
@@ -1264,26 +1315,26 @@ its own `host` and entries:
 
 ```json
 {
-  "specVersion": "1.0",
+  "specVersion": "0.9",
   "host": {
     "displayName": "Acme Enterprise AI",
     "identifier": "did:web:acme-corp.com"
   },
   "entries": [
     {
-      "identifier": "urn:air:acme.com:catalog:finance",
+      "identifier": "urn:air:acme.com:finance:catalog",
       "displayName": "Finance Services",
       "type": "application/ai-catalog+json",
       "url": "https://acme.com/catalogs/finance.json"
     },
     {
-      "identifier": "urn:air:acme.com:catalog:ml",
+      "identifier": "urn:air:acme.com:ml:catalog",
       "displayName": "ML Models",
       "type": "application/ai-catalog+json",
       "url": "https://acme.com/catalogs/ml.json"
     },
     {
-      "identifier": "urn:air:acme.com:catalog:devops",
+      "identifier": "urn:air:acme.com:devops:catalog",
       "displayName": "DevOps Tools",
       "type": "application/ai-catalog+json",
       "url": "https://acme.com/catalogs/devops.json"
@@ -1299,7 +1350,7 @@ agent, an MCP server, and a dataset together:
 
 ```json
 {
-  "identifier": "urn:air:acme.com:plugin:finance-suite",
+  "identifier": "urn:air:acme.com:finance-suite:plugin",
   "displayName": "Finance Plugin",
   "type": "application/ai-catalog+json",
   "url": "https://acme.com/plugins/finance-suite.json",
@@ -1329,7 +1380,10 @@ document their limit.
 The `extensions` property appears on the AI Catalog top-level object,
 on Catalog Entry objects, and on Trust Manifest objects. It provides
 a single, well-defined extension point for custom or vendor-specific
-properties.
+properties, and it is the only extension point whose keys and values
+this specification defines. Members outside `extensions` that this
+specification does not define are handled under
+[Unrecognized Members](#unrecognized-members).
 
 ## Format and Key Naming
 
@@ -1351,11 +1405,12 @@ For example, a catalog entry with `extensions` representing metadata and a custo
 
 ```json
 {
-  "specVersion": "1.0",
+  "specVersion": "0.9",
   "entries": [
     {
-      "identifier": "urn:air:treasury.gov:okf:fiscaldata",
+      "identifier": "urn:air:treasury.gov:okf/fiscaldata",
       "type": "text/vnd.okf+markdown",
+      "url": "https://data.example.com/fiscaldata.md",
       "tags": ["finance", "treasury"],
       "extensions": {
         "https://ai-catalog.org/extensions/metadata": {
@@ -1428,6 +1483,112 @@ For example, this entry excerpt supplies both links:
 }
 ```
 
+# Unrecognized Members
+
+The AI Catalog top-level object, Catalog Entry, Host Info, and Publisher
+objects are open: in addition to the members this specification defines,
+they MAY contain members it does not define. Such members are *unrecognized members*.
+
+This specification assigns no meaning to any unrecognized member. It takes
+no position on any convention a producer follows when choosing them,
+including conventions defined by other specifications. A producer may use
+unrecognized members to follow such a convention, to annotate a private
+catalog, or to experiment with a candidate field before proposing it.
+
+## Consumer Requirements
+
+Consumers:
+
+- MUST NOT reject a document because it contains unrecognized members.
+- MUST NOT derive semantics defined by this specification from an
+  unrecognized member. An unrecognized member MUST NOT alter how a consumer
+  interprets `identifier`, `type`, `url`, `data`, `version`, or any other
+  defined member.
+- SHOULD preserve unrecognized members, unchanged, when republishing or
+  re-serializing a catalog or entry, for example when a catalog operator
+  incorporates an entry from another catalog. Preservation is best effort:
+  an implementation bound to a fixed data model, such as a strongly typed
+  SDK, MAY drop members it cannot represent.
+- MUST retain unrecognized members when constructing a signed payload, as
+  required by
+  [Signed Payload and JWS Construction](#signed-payload-and-jws-construction).
+
+Conformance tooling MAY report unrecognized members as informational
+output, for example to surface a misspelled member name, but MUST NOT treat
+their presence as a conformance failure.
+
+## No Stability Guarantee
+
+Any member name this specification does not define MAY be defined by a
+future version, with any meaning. A producer that relies on an unrecognized
+member accepts that risk, and this specification does not coordinate with
+any outside convention before defining a member. Producers that want a
+stable, publisher-owned place for custom data SHOULD use
+[`extensions`](#extensions), whose namespaced keys cannot collide with
+members this specification defines later.
+
+A future major version MAY narrow or close these objects, depending on how
+the ecosystem uses them.
+
+## Trust and Signing
+
+Unrecognized members within a Trust Manifest are signed as part of that
+Trust Manifest (see
+[Signed Payload and JWS Construction](#signed-payload-and-jws-construction)).
+Unrecognized members anywhere within a catalog are signed as part of that
+catalog's signature (see
+[Catalog Snapshot Coverage](#catalog-snapshot-coverage)), subject to
+[Catalog Authorization](#catalog-authorization). In both cases the
+signature authenticates that the signer published those bytes, not what
+they mean.
+
+## Relationship to `extensions`
+
+| | `extensions` | Unrecognized members |
+|---|---|---|
+| **Defined by this specification** | Yes: key rules and official extensions | No |
+| **Can collide with a future core member** | No, keys are namespaced | Yes, no stability guarantee |
+| **Meaning to a consumer of this specification** | Whatever the extension defines | None |
+| **Handling** | Ignore unknown keys; retain in signed payloads | Ignore; preserve on republication; retain in signed payloads |
+| **Intended for** | Publisher-owned, named extensions | Outside conventions, local annotations, experimentation |
+
+## Examples
+
+These examples are illustrative. None of them is a convention this
+specification defines or recommends.
+
+**Local annotations in a private catalog.** An internal catalog that is
+never federated may annotate entries with members meaningful only inside the
+organization. These are bare names, so they carry the
+[no stability guarantee](#no-stability-guarantee) above; an organization that
+wants protection against future collisions uses `extensions` instead.
+
+```json
+{
+  "identifier": "urn:air:example.com:hr:benefits-agent",
+  "type": "application/a2a-agent-card+json",
+  "url": "https://agents.example.com/benefits/.well-known/agent-card.json",
+  "costCenter": "CC-4471",
+  "approvedBy": "platform-security",
+  "reviewDate": "2026-09-30"
+}
+```
+
+**Prototyping a candidate field.** An implementer can ship a field that is
+under discussion for a future version, gather experience, and bring that
+experience to the proposal. Until the field is defined, consumers of this
+specification ignore it.
+
+```json
+{
+  "identifier": "urn:air:example.com:weather",
+  "type": "application/mcp-server-card+json",
+  "url": "https://api.example.com/mcp/weather.json",
+  "lifecycle": "deprecated",
+  "supersededBy": "urn:air:example.com:weather-v2"
+}
+```
+
 # Version Handling
 
 The `specVersion` field identifies which version of this specification
@@ -1436,8 +1597,12 @@ handle version differences.
 
 ## Version Format
 
-The `specVersion` value is a "Major.Minor" string (e.g., "1.0",
+The `specVersion` value is a "Major.Minor" string (e.g., "0.9", "1.0",
 "1.1", "2.0"). Major and minor components are non-negative integers.
+
+Catalogs implementing this v0.9 release candidate use `"0.9"`. The
+planned final v1.0 specification will use `"1.0"`; v0.9 is not an alias
+for v1.0, and consumers should not assume compatibility between them.
 
 ## Compatibility Rules
 
@@ -1445,7 +1610,8 @@ Minor version increments (e.g., 1.0 → 1.1)
 : The specification adds new OPTIONAL fields or features. Documents
   conforming to a higher minor version are backward-compatible with
   consumers that understand the same major version. Consumers MUST
-  ignore unrecognized fields.
+  ignore unrecognized members as described in
+  [Unrecognized Members](#unrecognized-members).
 
 Major version increments (e.g., 1.x → 2.0)
 : The specification introduces breaking changes (removed fields,
@@ -1460,8 +1626,9 @@ Consumers SHOULD:
 - Parse the `specVersion` field before processing the document.
 - Accept documents whose major version matches their supported major
   version, regardless of minor version differences.
-- Ignore unrecognized fields (forward compatibility within a major
-  version).
+- Ignore unrecognized members, and preserve them when republishing
+  (forward compatibility within a major version; see
+  [Unrecognized Members](#unrecognized-members)).
 - Reject documents whose major version is higher than the highest
   major version they support, with an informative error message.
 
@@ -1714,8 +1881,8 @@ endorsement times need an appropriate update source and evidence policy.
 ## Identifier Typosquatting
 
 Catalog entries are identified by URIs/URNs. An attacker can register
-identifiers similar to legitimate ones (e.g., `urn:air:acme.com:agent:financ`
-vs. `urn:air:acme.com:agent:finance`) to trick consumers into using a
+identifiers similar to legitimate ones (e.g., `urn:air:acme.com:financ:agent`
+vs. `urn:air:acme.com:finance:agent`) to trick consumers into using a
 malicious artifact.
 
 Registries and consumers SHOULD implement similarity checks on
@@ -1842,8 +2009,9 @@ classDiagram
 
 ## Media Type Registration: application/ai-catalog+json
 
-This section registers the `application/ai-catalog+json` media type
-[[RFC6838]] in the "Application" registry.
+This section specifies the requested registration of the
+`application/ai-catalog+json` media type [[RFC6838]] in the "Application"
+registry.
 
 Type name:
 : application
@@ -1889,8 +2057,8 @@ Restrictions on usage:
 
 ## Link Relation Registration: ai-catalog
 
-This section registers the `ai-catalog` link relation type in the
-IANA "Link Relations" registry [[RFC8288]].
+This section specifies the requested registration of the `ai-catalog`
+link relation type in the IANA "Link Relations" registry [[RFC8288]].
 
 Relation Name:
 : ai-catalog
@@ -1905,8 +2073,8 @@ Reference:
 
 ## Well-Known URI Registration: ai-catalog.json
 
-This section registers the `ai-catalog.json` well-known URI in the
-IANA "Well-Known URIs" registry [[RFC8615]].
+This section specifies the requested registration of the `ai-catalog.json`
+well-known URI in the IANA "Well-Known URIs" registry [[RFC8615]].
 
 URI Suffix:
 : ai-catalog.json
@@ -1926,10 +2094,13 @@ Related Information:
 
 The following CDDL [[RFC8610]] defines the structural schema. The normative
 prose additionally constrains contributor URIs, manifest substance, subject
-binding, timestamp validity, and signature verification. The schema describes
-recognized members. Under [Version Handling](#version-handling), consumers
-MUST ignore unrecognized members when validating this structure, but MUST
-retain them when constructing signed payloads.
+binding, timestamp validity, and signature verification. The `AICatalog`,
+`CatalogEntry`, `HostInfo`, and `Publisher` maps are explicitly open
+(`* text => any`), as defined in
+[Unrecognized Members](#unrecognized-members). The Trust Manifest maps
+describe recognized members only; under [Version Handling](#version-handling),
+consumers MUST ignore unrecognized members when validating any of these
+structures, but MUST retain them when constructing signed payloads.
 
 ## AI Catalog
 
@@ -1940,14 +2111,16 @@ AICatalog = {
   entries: [* CatalogEntry],
   ? signature: Signature,
   ? additionalSignatures: any,
-  ? extensions: { * text => any }
+  ? extensions: { * text => any },
+  * text => any
 }
 
 HostInfo = {
   displayName: text,
   ? identifier: text,
   ? documentationUrl: text,
-  ? logoUrl: text
+  ? logoUrl: text,
+  * text => any
 }
 
 CatalogEntry = {
@@ -1962,13 +2135,15 @@ CatalogEntry = {
   ? digest: text,
   ? trustManifests: [* TrustManifest],
   ? updatedAt: tdate,
-  ? extensions: { * text => any }
+  ? extensions: { * text => any },
+  * text => any
 }
 
 Publisher = {
   identifier: text,
   displayName: text,
-  ? identityType: text
+  ? identityType: text,
+  * text => any
 }
 ```
 
@@ -2046,7 +2221,7 @@ Digest and JWS strings in illustrative examples are placeholders.
 
 ```json
 {
-  "specVersion": "1.0",
+  "specVersion": "0.9",
   "host": {
     "displayName": "Acme Services Inc.",
     "identifier": "did:web:acme-corp.com",
@@ -2054,7 +2229,7 @@ Digest and JWS strings in illustrative examples are placeholders.
   },
   "entries": [
     {
-      "identifier": "urn:air:acme.com:agent:finance-a2a",
+      "identifier": "urn:air:acme.com:finance-a2a:a2a",
       "version": "2.1.0",
       "type": "application/a2a-agent-card+json",
       "url": "https://api.acme-corp.com/agents/finance.json",
@@ -2085,7 +2260,7 @@ Digest and JWS strings in illustrative examples are placeholders.
       ]
     },
     {
-      "identifier": "urn:air:acme.com:server:finance-mcp",
+      "identifier": "urn:air:acme.com:finance-mcp:mcp",
       "version": "1.4.0",
       "type": "application/mcp-server-card+json",
       "url": "https://api.acme-corp.com/mcp/server-card",
@@ -2097,7 +2272,7 @@ Digest and JWS strings in illustrative examples are placeholders.
       "updatedAt": "2026-03-15T10:00:00Z"
     },
     {
-      "identifier": "urn:air:acme.com:plugin:finance-suite",
+      "identifier": "urn:air:acme.com:finance-suite:plugin",
       "displayName": "Acme Finance Suite",
       "type": "application/ai-catalog+json",
       "description": "A2A agent + MCP server + dataset for finance workflows.",
@@ -2106,20 +2281,20 @@ Digest and JWS strings in illustrative examples are placeholders.
         "suite"
       ],
       "data": {
-        "specVersion": "1.0",
+        "specVersion": "0.9",
         "entries": [
           {
-            "identifier": "urn:air:acme.com:agent:finance-a2a",
+            "identifier": "urn:air:acme.com:finance-a2a:a2a",
             "type": "application/a2a-agent-card+json",
             "url": "https://api.acme-corp.com/agents/finance.json"
           },
           {
-            "identifier": "urn:air:acme.com:server:finance-mcp",
+            "identifier": "urn:air:acme.com:finance-mcp:mcp",
             "type": "application/mcp-server-card+json",
             "url": "https://api.acme-corp.com/mcp/server-card"
           },
           {
-            "identifier": "urn:air:acme.com:data:market-2026q1",
+            "identifier": "urn:air:acme.com:market-2026q1:dataset",
             "displayName": "Market Dataset Q1 2026",
             "type": "application/parquet",
             "url": "https://data.acme-corp.com/market-2026q1.parquet",
@@ -2144,7 +2319,7 @@ Digest and JWS strings in illustrative examples are placeholders.
         {
           "contributor": "did:web:acme.com",
           "subject": {
-            "identifier": "urn:air:acme.com:plugin:finance-suite",
+            "identifier": "urn:air:acme.com:finance-suite:plugin",
             "type": "application/ai-catalog+json",
             "digest": "sha256:22223333444455556666777788889999aaaabbbbccccddddeeeeffff00001111"
           },
@@ -2170,21 +2345,21 @@ document:
 
 ```json
 {
-  "specVersion": "1.0",
+  "specVersion": "0.9",
   "host": {
     "displayName": "Acme Enterprise AI",
     "identifier": "did:web:acme-corp.com"
   },
   "entries": [
     {
-      "identifier": "urn:air:acme.com:agent:assistant",
+      "identifier": "urn:air:acme.com:assistant:agent",
       "version": "3.0.0",
       "type": "application/a2a-agent-card+json",
       "url": "https://api.acme-corp.com/agents/assistant.json",
       "description": "General-purpose corporate assistant agent."
     },
     {
-      "identifier": "urn:air:acme.com:catalog:finance",
+      "identifier": "urn:air:acme.com:finance:catalog",
       "displayName": "Finance Services",
       "type": "application/ai-catalog+json",
       "url": "https://acme-corp.com/catalogs/finance.json",
@@ -2192,7 +2367,7 @@ document:
       "tags": ["finance", "trading", "compliance"]
     },
     {
-      "identifier": "urn:air:acme.com:catalog:engineering",
+      "identifier": "urn:air:acme.com:engineering:catalog",
       "displayName": "Engineering Tools",
       "type": "application/ai-catalog+json",
       "url": "https://acme-corp.com/catalogs/engineering.json",
@@ -2200,7 +2375,7 @@ document:
       "tags": ["engineering", "devops", "ci-cd"]
     },
     {
-      "identifier": "urn:air:acme.com:catalog:ml-models",
+      "identifier": "urn:air:acme.com:ml-models:catalog",
       "displayName": "ML Models",
       "type": "application/ai-catalog+json",
       "url": "https://acme-corp.com/catalogs/ml-models.json",
@@ -2224,7 +2399,7 @@ containing both protocol-specific entries:
 
 ```json
 {
-  "identifier": "urn:air:acme.com:agent:finance",
+  "identifier": "urn:air:acme.com:finance:agent",
   "displayName": "Acme Finance Agent",
   "type": "application/ai-catalog+json",
   "description": "Finance agent accessible via both MCP and A2A protocols.",
@@ -2237,15 +2412,15 @@ containing both protocol-specific entries:
     "displayName": "Acme Financial Corp"
   },
   "data": {
-    "specVersion": "1.0",
+    "specVersion": "0.9",
     "entries": [
       {
-        "identifier": "urn:air:acme.com:agent:finance:mcp",
+        "identifier": "urn:air:acme.com:finance:mcp",
         "type": "application/mcp-server-card+json",
         "url": "https://api.acme-corp.com/mcp/server-card"
       },
       {
-        "identifier": "urn:air:acme.com:agent:finance:a2a",
+        "identifier": "urn:air:acme.com:finance:a2a",
         "type": "application/a2a-agent-card+json",
         "url": "https://api.acme-corp.com/agents/finance"
       }

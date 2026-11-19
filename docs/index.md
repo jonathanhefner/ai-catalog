@@ -6,7 +6,11 @@ icon: material/home
 
 **A JSON format for making all your AI artifacts discoverable.**
 
-The AI ecosystem is growing fast — MCP servers, A2A agents, Claude Code plugins, datasets, model cards. Each protocol defines its own discovery mechanism, forcing clients to implement bespoke logic for every artifact type.
+**v0.9 - Release Candidate for v1.0:** Ready for implementation and
+interoperability feedback, prior to the final v1.0 specification.
+See the [specification status and feedback guidance](specification.md).
+
+The AI ecosystem is growing fast — MCP servers, A2A agents, Agent Plugins, datasets, model cards. Each protocol defines its own discovery mechanism, forcing clients to implement bespoke logic for every artifact type.
 
 AI Catalog solves this with a simple, typed JSON format that indexes any kind of AI artifact in one place. Clients read one file. Publishers maintain one list.
 
@@ -23,17 +27,17 @@ AI Catalog solves this with a simple, typed JSON format that indexes any kind of
   },
   "entries": [
     {
-      "identifier": "urn:air:acme-corp.com:mcp:weather",
+      "identifier": "urn:air:acme-corp.com:weather:mcp",
       "type": "application/mcp-server-card+json",
       "url": "https://api.acme-corp.com/mcp/server-card"
     },
     {
-      "identifier": "urn:air:acme-corp.com:a2a:research",
+      "identifier": "urn:air:acme-corp.com:research:a2a",
       "type": "application/a2a-agent-card+json",
       "url": "https://agents.acme-corp.com/research"
     },
     {
-      "identifier": "urn:air:acme-corp.com:catalog:finance",
+      "identifier": "urn:air:acme-corp.com:finance:catalog",
       "displayName": "Finance Suite",
       "type": "application/ai-catalog+json",
       "url": "https://acme-corp.com/catalogs/finance.json"
